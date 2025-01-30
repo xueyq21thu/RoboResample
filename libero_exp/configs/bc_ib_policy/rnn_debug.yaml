@@ -1,0 +1,31 @@
+defaults:
+  - _self_
+  - ../base/data@data: default
+  - ../base/algo@algo: bc_ib_policy   
+  - ../base/policy@policy: rnn_policy    # policy_name: BCRNNPolicy, image encoder: resnet, decoder: rnn
+  - ../base/train@train: default
+  - ../base/eval@eval: default
+  - ../base/env@env: default
+
+
+# record
+experiment: "bc_ib_policy"     # tag for wandb and log dir   
+experiment_dir: ???
+
+hydra:
+  run:
+    dir: ./outputs/tmp/libero/${experiment}/transfomer/${data.env_name}/ratio${data.train_ratio}_scale${mi_loss_scale}_${mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+  sweep:
+    dir: ./outputs/tmp/libero/${experiment}/transfomer/${data.env_name}/ratio${data.train_ratio}_scale${mi_loss_scale}_${mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+    subdir: ${hydra.job.num}
+    
+wandb:
+  use_wandb: true
+  project: bc-ib-tmp
+  name: ${data.env_name}_${experiment}_transfomer_${now:%m%d}_${now:%H%M}_seed${train.seed}_ratio${data.train_ratio}_scale${mi_loss_scale}_${mine_mi_loss_scale}_${hydra:job.num}
+  group: ${data.env_name}_${experiment}_transfomer
+  dir: ./wandb/tmp/${env.env_type}/${experiment}/transfomer/${data.env_name}/ratio${data.train_ratio}_scale${mi_loss_scale}_${mine_mi_loss_scale}
+
+mi_loss_scale: 0.01
+mine_mi_loss_scale: 0.1
+eval_all: False

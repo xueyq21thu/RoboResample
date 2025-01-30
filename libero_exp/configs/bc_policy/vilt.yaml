@@ -1,0 +1,30 @@
+defaults:
+  - _self_
+  - ../base/data@data: default
+  - ../base/algo@algo: bc_policy   
+  - ../base/policy@policy: vilt_policy    # policy_name: BCViLTPolicy, image encoder: ViT, fuse: transformer
+  - ../base/train@train: default
+  - ../base/eval@eval: default
+  - ../base/env@env: default
+
+
+# record
+experiment: "bc_policy"     # tag for wandb and log dir   
+experiment_dir: ???
+
+hydra:
+  run:
+    dir: ./outputs/libero/${experiment}/vilt/${data.env_name}/ratio${data.train_ratio}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+  sweep:
+    dir: ./outputs/libero/${experiment}/vilt/${data.env_name}/ratio${data.train_ratio}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+    subdir: ${hydra.job.num}
+    
+wandb:
+  use_wandb: true
+  project: bc-ib-vilt
+  name: ${data.env_name}_${experiment}_vilt_${now:%m%d}_${now:%H%M}_seed${train.seed}_ratio${data.train_ratio}_${hydra:job.num}
+  group: ${data.env_name}_${experiment}_vilt
+  dir: ./wandb/${env.env_type}/${experiment}/vilt/${data.env_name}/ratio${data.train_ratio}
+
+mi_loss_scale: 0.01
+mine_mi_loss_scale: 0.1

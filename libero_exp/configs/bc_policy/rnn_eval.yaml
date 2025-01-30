@@ -1,0 +1,22 @@
+defaults:
+  - _self_
+  - ../base/data@data: default
+  - ../base/algo@algo: bc_policy   
+  - ../base/policy@policy: rnn_policy    # policy_name: BCRNNPolicy, image encoder: resnet, fuse: rnn
+  - ../base/train@train: default
+  - ../base/eval@eval: default
+  - ../base/env@env: default
+
+
+# record
+experiment: "bc_policy"     # tag for wandb and log dir   
+experiment_dir: ???
+
+hydra:
+  run:
+    dir: ./outputs/tmp/libero/${experiment}/rnn/${data.env_name}/ratio${data.train_ratio}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+  sweep:
+    dir: ./outputs/tmp/libero/${experiment}/rnn/${data.env_name}/ratio${data.train_ratio}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+    subdir: ${hydra.job.num}
+
+eval_all: False

@@ -1,0 +1,33 @@
+defaults:
+    - _self_
+    - ../base/data@data: default
+    - ../base/algo@algo: bc_ib_policy   
+    - ../base/policy@policy: temporal_fuse
+    - ../base/train@train: full_ft
+    - ../base/eval@eval: default
+    - ../base/env@env: default
+
+algorithm: bc_ib_policy
+ft_method: full_ft
+experiment_dir: ???
+
+# logging
+dry_run: False
+debug: False
+
+wandb:
+    use_wandb: true
+    project: cortexbench_adroit_${policy.embedding_type}_${ft_method}-tmp
+    name: adroit_temporal_fuse_${env.task_name}_${algorithm}_demo${data.num_demos}_${now:%m%d}_${now:%H%M}_seed${train.seed}
+    group: adroit_${env.task_name}_${algorithm}
+    dir: ./wandb/tmp/{env.env_type}/${ft_method}_temporal_fuse/{algorithm}/${policy.embedding_type}/{env.env_name}/{env.task_name}/demo{data.num_demos}_scale${mi_loss_scale}_${mine_mi_loss_scale}
+
+hydra:
+    run:
+        dir: ./outputs/tmp/cortexbench/${ft_method}_temporal_fuse/${algorithm}/${policy.embedding_type}/adroit/${env.task_name}/demo${data.num_demos}_scale${mi_loss_scale}_${mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+    sweep:
+        dir: ./outputs/tmp/cortexbench/${ft_method}_temporal_fuse/${algorithm}/${policy.embedding_type}/adroit/${env.task_name}/demo${data.num_demos}_scale${mi_loss_scale}_${mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+        subdir: ${hydra.job.num}
+
+mi_loss_scale: 0.005
+mine_mi_loss_scale: 0.1
