@@ -135,7 +135,7 @@ class BaseModel(nn.Module, metaclass=ModelMeta):
         
     def forward(self, data, return_latent=False):
         cfg= self.cfg
-        if cfg.ft_method == 'full_ft':
+        if cfg.train.ft_method == 'full_ft':
             b, t, c, h, w = data["images"].shape
             images = rearrange(data["images"], "b t c h w -> (b t) c h w")
             embeddings = self.get_representations(images.to(self.device)).view(b, t, -1)  # (b*t, emb_dim) -> (b, t, emb_dim)
@@ -229,7 +229,7 @@ class BaseModel(nn.Module, metaclass=ModelMeta):
 
     def save(self, path, epoch, optimizer, scheduler):
         state_dict = self.state_dict()
-        if self.cfg.ft_method == "partial_ft":
+        if self.cfg.train.ft_method == "partial_ft":
             keys_to_remove = [key for key in state_dict if key.startswith('feature_extractor')]
             for key in keys_to_remove:
                 del state_dict[key]

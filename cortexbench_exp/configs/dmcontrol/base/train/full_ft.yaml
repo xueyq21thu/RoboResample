@@ -2,6 +2,7 @@ defaults:
     - optimizer@optimizer: adam.yaml
     - scheduler@scheduler: cosine_annealing.yaml
 
+ft_method: full_ft
 device: cuda
 train_gpus: [0]
 mix_precision: False

@@ -7,8 +7,6 @@ defaults:
     - ../base/eval@eval: default
     - ../base/env@env: default
 
-algorithm: bc_ib_policy
-ft_method: full_ft
 experiment_dir: ???
 
 # logging
@@ -17,17 +15,15 @@ debug: False
 
 wandb:
     use_wandb: true
-    project: cortexbench_metaworld_${policy.embedding_type}_${ft_method}
-    name: metaworld_spatial_fuse_${env.task_name}_${algorithm}_${now:%m%d}_${now:%H%M}_seed${train.seed}
-    group: metaworld_${env.task_name}_${algorithm}
-    dir: ./wandb/cortexbench/${ft_method}_spatial_fuse/${algorithm}/${policy.embedding_type}/metaworld/${env.task_name}/demo${data.num_demos}_scale${mi_loss_scale}_${mine_mi_loss_scale}
+    project: cortexbench_${env.env_name}_${policy.embedding_type}_${train.ft_method}
+    name: ${env.env_name}_${policy.fuse_method}_${env.task_name}_${algo.algorithm}_demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}_${now:%m%d}_${now:%m%d}_${now:%H%M}_seed${train.seed}
+    group: ${env.env_name}_${env.task_name}_${algo.algorithm}
+    dir: ./wandb/cortexbench/${train.ft_method}_${policy.fuse_method}/${algo.algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}
 
 hydra:
     run:
-        dir: ./outputs/cortexbench/${ft_method}_spatial_fuse/${algorithm}/${policy.embedding_type}/metaworld/${env.task_name}/demo${data.num_demos}_scale${mi_loss_scale}_${mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+        dir: ./outputs/cortexbench/${train.ft_method}_${policy.fuse_method}/${algo.algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
     sweep:
-        dir: ./outputs/cortexbench/${ft_method}_spatial_fuse/${algorithm}/${policy.embedding_type}/metaworld/${env.task_name}/demo${data.num_demos}_scale${mi_loss_scale}_${mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+        dir: ./outputs/cortexbench/${train.ft_method}_${policy.fuse_method}/${algo.algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
         subdir: ${hydra.job.num}
 
-mi_loss_scale: 0.005
-mine_mi_loss_scale: 0.1

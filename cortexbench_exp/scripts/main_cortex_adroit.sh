@@ -1,34 +1,31 @@
 #!/bin/bash
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${HOME}/.mujoco/mujoco200/bin
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia
-# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
 export MUJOCO_GL=egl
 
-cd /baishuanghao/code/BC-IB
 source activate bcib
 
 POLiCY_NAME=$1
 CONFIG_NAME=$2
-ENV_NAME=adroit
 MODEL_TYPE=$3
 SEED=$4
+
+ENV_NAME=adroit
+# TASK_NAMES=(pen-v0 relocate-v0)
+TASK_NAMES=(pen-v0)
 
 MINE=0.1
 MI=5e-3
 
-# /baishuanghao/code/BC-IB/cortexbench_exp/scripts/main_cortex_adroit.sh bc_policy full_ft_temporal_fuse ResNet 0
-# /baishuanghao/code/BC-IB/cortexbench_exp/scripts/main_cortex_adroit.sh bc_policy full_ft_spatial_fuse ResNet 0
-# /baishuanghao/code/BC-IB/cortexbench_exp/scripts/main_cortex_adroit.sh bc_policy partial_ft_temporal_fuse VC1 0
-# /baishuanghao/code/BC-IB/cortexbench_exp/scripts/main_cortex_adroit.sh bc_policy partial_ft_spatial_fuse VC1 0
+# bash cortexbench_exp/scripts/main_cortex_adroit.sh bc_policy full_ft_temporal_fuse ResNet 0
+# bash cortexbench_exp/scripts/main_cortex_adroit.sh bc_policy full_ft_spatial_fuse ResNet 0
+# bash cortexbench_exp/scripts/main_cortex_adroit.sh bc_policy partial_ft_temporal_fuse VC1 0
+# bash cortexbench_exp/scripts/main_cortex_adroit.sh bc_policy partial_ft_spatial_fuse VC1 0
 
-# /baishuanghao/code/BC-IB/cortexbench_exp/scripts/main_cortex_adroit.sh bc_ib_policy full_ft_spatial_fuse ResNet 0
-# /baishuanghao/code/BC-IB/cortexbench_exp/scripts/main_cortex_adroit.sh bc_ib_policy partial_ft_spatial_fuse VC1 0
-
-# TASK_NAMES=(pen-v0 relocate-v0)
-# TASK_NAMES=(pen-v0)
-TASK_NAMES=(relocate-v0)
+# bash cortexbench_exp/scripts/main_cortex_adroit.sh bc_ib_policy full_ft_temporal_fuse ResNet 0
+# bash cortexbench_exp/scripts/main_cortex_adroit.sh bc_ib_policy full_ft_spatial_fuse ResNet 0
+# bash cortexbench_exp/scripts/main_cortex_adroit.sh bc_ib_policy partial_ft_temporal_fuse VC1 0
+# bash cortexbench_exp/scripts/main_cortex_adroit.sh bc_ib_policy partial_ft_spatial_fuse VC1 0
 
 for TASK_NAME in "${TASK_NAMES[@]}"; do
     python train_cortex.py \
@@ -38,7 +35,7 @@ for TASK_NAME in "${TASK_NAMES[@]}"; do
         env.task_name=${TASK_NAME} \
         train.seed=${SEED} \
         policy.embedding_type=${MODEL_TYPE} \
-        mine_mi_loss_scale=${MINE} \
-        mi_loss_scale=${MI} 
+        train.mine_mi_loss_scale=${MINE} \
+        train.mi_loss_scale=${MI} 
 done
     

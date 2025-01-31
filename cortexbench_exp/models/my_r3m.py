@@ -27,7 +27,7 @@ class R3M(BaseModel):
         if cfg.policy.embedding in ['r3m-rn50', 'r3m-small']:
             load_path = os.path.join(cfg.policy.embedding_dir, 'r3m', cfg.policy.embedding)
             self.feature_extractor = load_r3m("r-r3m-vit", load_path=load_path, only_return_model=True)
-            if self.cfg.ft_method == 'partial_ft':
+            if cfg.train.ft_method == 'partial_ft':
                 for param in self.feature_extractor.parameters():
                     param.requires_grad = False
             self.vector_extractor = instantiate_extractor(self.feature_extractor)()
@@ -36,7 +36,7 @@ class R3M(BaseModel):
     
     def forward(self, data, return_latent=False):
         cfg = self.cfg
-        if cfg.ft_method == 'full_ft':
+        if cfg.train.ft_method == 'full_ft':
             b, t, c, h, w = data["images"].shape
             images = rearrange(data["images"], "b t c h w -> (b t) c h w")
             embeddings = self.get_representations(images.to(self.device)) 

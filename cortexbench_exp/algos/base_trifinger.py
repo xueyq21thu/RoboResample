@@ -26,17 +26,13 @@ class BaseAlgo_Trifinger(nn.Module, metaclass=AlgoMeta):
             cfg.env.proprio_dim = 9
             cfg.data.action_dim = 9
             cfg.data.goal_type = 'goal_cond'
-            if cfg.ft_method == 'partial_ft':
+            if cfg.train.ft_method == 'partial_ft':
                 cfg.train.epochs = 1000
                 cfg.train.save_frequency = 100
         elif cfg.env.task_name == 'reach':
             cfg.env.proprio_dim = 9
             cfg.data.action_dim = 3
             cfg.data.goal_type = 'goal_none'
-        
-        if cfg.policy.embedding_type == "ViT":
-            cfg.train.epochs = cfg.train.epochs * 2
-            cfg.train.save_frequency = cfg.train.save_frequency * 2
 
         if inference:
             self.device = cfg.train.device

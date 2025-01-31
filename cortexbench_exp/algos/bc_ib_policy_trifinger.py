@@ -71,7 +71,7 @@ class BC_IB_Policy_Trifinger(BaseAlgo_Trifinger):
     def compute_loss(self, data, return_metric=True):
         x, z, dist = self.model(data, return_latent=True)
         bc_loss = self.model.policy_head.loss_fn(dist, data["output"]["action"].to(self.device), reduction="mean")
-        mi_loss = self.mine(x, z) * self.cfg.mi_loss_scale
+        mi_loss = self.mine(x, z) * self.cfg.train.mi_loss_scale
         
         if return_metric:
             with torch.no_grad():
@@ -84,7 +84,7 @@ class BC_IB_Policy_Trifinger(BaseAlgo_Trifinger):
         with torch.no_grad():
             x, z, _ = self.model(data, return_latent=True)
         x, z = x.detach(), z.detach()
-        mi_loss = self.mine(x, z) * self.cfg.mine_mi_loss_scale
+        mi_loss = self.mine(x, z) * self.cfg.train.mine_mi_loss_scale
 
         return mi_loss
 

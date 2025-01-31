@@ -204,7 +204,7 @@ class TrifingerDataset(Dataset):
         imgs = policy.process_data(imgs)
         img_goal = imgs[-1]
         
-        if policy.ft_method == 'partial_ft':
+        if policy.train.ft_method == 'partial_ft':
             embeddings = policy.get_representations(imgs.to(self.device)).cpu()
             embedding_goal = embeddings[-1]
 
@@ -216,7 +216,7 @@ class TrifingerDataset(Dataset):
             action = action[: self.n_fingers_to_move * 3]
             
             # Observation dict (current state and action)
-            if policy.ft_method == 'partial_ft':
+            if policy.train.ft_method == 'partial_ft':
                 input_dict = {
                     "ft_state": torch.FloatTensor(ft_pos_cur),
                     "embedding": embeddings[i],
@@ -224,7 +224,7 @@ class TrifingerDataset(Dataset):
                     "o_goal_pos": o_goal_pos,
                     "o_goal_pos_rel": o_goal_pos_rel,
                 }
-            elif policy.ft_method == 'full_ft':
+            elif policy.train.ft_method == 'full_ft':
                 input_dict = {
                     "ft_state": torch.FloatTensor(ft_pos_cur),
                     "img": imgs[i],

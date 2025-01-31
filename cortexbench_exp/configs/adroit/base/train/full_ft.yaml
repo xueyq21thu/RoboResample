@@ -2,6 +2,7 @@ defaults:
     - optimizer@optimizer: adam.yaml
     - scheduler@scheduler: cosine_annealing.yaml
 
+ft_method: full_ft
 device: cuda
 train_gpus: [0]
 mix_precision: False
@@ -13,6 +14,8 @@ batch_size: 256
 print_frequency: 10
 save_frequency: 5               # frequency of epochs for saving policies
 grad_clip: 100.
+mi_loss_scale: 0.005
+mine_mi_loss_scale: 0.1
 
 # resume
 resume: False

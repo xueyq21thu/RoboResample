@@ -33,7 +33,7 @@ class MVP(BaseModel):
         if cfg.policy.embedding == 'mvp-small':
             load_path = os.path.join(cfg.policy.embedding_dir, 'mvp', cfg.policy.embedding)
             self.feature_extractor = load_mvp("r-mvp", load_path=load_path, only_return_model=True)
-            if self.cfg.ft_method == 'partial_ft':
+            if cfg.train.ft_method == 'partial_ft':
                 for param in self.feature_extractor.parameters():
                     param.requires_grad = False
             self.vector_extractor = instantiate_extractor(self.feature_extractor)()
@@ -42,7 +42,7 @@ class MVP(BaseModel):
 
     def forward(self, data, return_latent=False):
         cfg = self.cfg
-        if cfg.ft_method == 'full_ft':
+        if cfg.train.ft_method == 'full_ft':
             b, t, l, c, h, w = data["images"].shape
             images = rearrange(data["images"], "b t l c h w -> (b t) l c h w")
             embeddings = self.get_representations(images.to(self.device)) # (b*t, n, emb_dim)

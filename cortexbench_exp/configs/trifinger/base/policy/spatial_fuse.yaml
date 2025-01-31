@@ -1,8 +1,9 @@
 embedding_type: VC1
 embedding: ???                     # choice of embedding network
 embedding_dim: 768
-embedding_dir: /baishuanghao/model
+embedding_dir: ???
 
+fuse_method: spatial_fuse
 use_spatial: True
 spatial_fuse:
     fuse_method: 'sub_cat'

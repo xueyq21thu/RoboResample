@@ -22,11 +22,10 @@ from .modules.extraction import instantiate_extractor
 class Voltron(BaseModel):
     def __init__(self, cfg):
         super().__init__(cfg)
-        cfg.policy.embedding_dim = 384
         if cfg.policy.embedding == 'v-cond-small' or cfg.policy.embedding == 'v-conda-base':
             load_path = os.path.join(cfg.policy.embedding_dir, 'voltron', cfg.policy.embedding)
             self.feature_extractor = load_voltron("v-cond", load_path=load_path, only_return_model=True)
-            if self.cfg.ft_method == 'partial_ft':
+            if cfg.train.ft_method == 'partial_ft':
                 for param in self.feature_extractor.parameters():
                     param.requires_grad = False
             self.vector_extractor = instantiate_extractor(self.feature_extractor)()
@@ -35,7 +34,7 @@ class Voltron(BaseModel):
         
     def forward(self, data, return_latent=False):
         cfg = self.cfg
-        if cfg.ft_method == 'full_ft':
+        if cfg.train.ft_method == 'full_ft':
             b, t, l, c, h, w = data["images"].shape
             data["images"] = data["images"].to(self.device)
             images = rearrange(data["images"], "b t l c h w -> (b t) l c h w")

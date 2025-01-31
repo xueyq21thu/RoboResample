@@ -20,7 +20,7 @@ class ResNet(BaseModel):
         cfg.policy.embedding_dim = 512
         if cfg.policy.embedding == 'resnet18':
             self.feature_extractor = ResnetEncoder(output_size=cfg.policy.embedding_dim)    # 0.978752 M
-            if self.cfg.ft_method == 'partial_ft':
+            if cfg.train.ft_method == 'partial_ft':
                 for param in self.feature_extractor.parameters():
                     param.requires_grad = False
         else:

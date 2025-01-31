@@ -7,10 +7,6 @@ defaults:
     - ../base/eval@eval: default
     - ../base/env@env: default
 
-exp_notes: Access DMC envs using the dmc2gym package. Experts trained with DDPG from URLB.
-
-algorithm: bc_policy
-ft_method: partial_ft
 experiment_dir: ???
 
 # logging
@@ -19,16 +15,16 @@ debug: False
 
 wandb:
     use_wandb: true
-    project: cortexbench_dmcontrol_${policy.embedding_type}_${ft_method}
-    name: dmcontrol_spatial_fuse_${env.task_name}_${algorithm}_demo${data.num_demos}_${now:%m%d}_${now:%H%M}_seed${train.seed}
-    group: dmcontrol_${env.task_name}_${algorithm}
-    dir: ./wandb/cortexbench/${ft_method}_spatial_fuse/${algorithm}/${policy.embedding_type}/dmcontrol/${env.task_name}/demo${data.num_demos}
+    project: cortexbench_${env.env_name}_${policy.embedding_type}_${train.ft_method}
+    name: ${env.env_name}_${policy.fuse_method}_${env.task_name}_${algorithm}_demo${data.num_demos}_${now:%m%d}_${now:%H%M}_seed${train.seed}
+    group: ${env.env_name}_${env.task_name}_${algorithm}
+    dir: ./wandb/cortexbench/${train.ft_method}_${policy.fuse_method}/${algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}
 
 hydra:
     run:
-        dir: ./outputs/cortexbench/${ft_method}_spatial_fuse/${algorithm}/${policy.embedding_type}/dmcontrol/${env.task_name}/demo${data.num_demos}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+        dir: ./outputs/cortexbench/${train.ft_method}_${policy.fuse_method}/${algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}/${now:%m%d}_${now:%H%M}_seed${train.seed}
     sweep:
-        dir: ./outputs/cortexbench/${ft_method}_spatial_fuse/${algorithm}/${policy.embedding_type}/dmcontrol/${env.task_name}/demo${data.num_demos}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+        dir: ./outputs/cortexbench/${train.ft_method}_${policy.fuse_method}/${algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}/${now:%m%d}_${now:%H%M}_seed${train.seed}
         subdir: ${hydra.job.num}
 
 mi_loss_scale: 0.005

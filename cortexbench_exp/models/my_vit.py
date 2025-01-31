@@ -25,7 +25,7 @@ class ViT(BaseModel):
                 mlp_hidden_size=64,
                 dropout=0.1,
             )
-            if self.cfg.ft_method == 'partial_ft':
+            if cfg.train.ft_method == 'partial_ft':
                 for param in self.feature_extractor.parameters():
                     param.requires_grad = False
         else:

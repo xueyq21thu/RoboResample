@@ -9,7 +9,7 @@ defaults:
 
 exp_notes: Access DMC envs using the dmc2gym package. Experts trained with DDPG from URLB.
 
-algorithm: bc_ib_policy
+algo.algorithm: bc_ib_policy
 ft_method: full_ft
 experiment_dir: ???
 
@@ -20,16 +20,14 @@ debug: False
 wandb:
     use_wandb: true
     project: cortexbench_trifinger_${policy.embedding_type}_${ft_method}
-    name: trifinger_temporal_fuse_${env.task_name}_${algorithm}_${now:%m%d}_${now:%H%M}_seed${train.seed}_${hydra:job.num}
-    group: trifinger_${env.task_name}_${algorithm}
-    dir: ./wandb/cortexbench/${ft_method}_temporal_fuse/${algorithm}/${policy.embedding_type}/trifinger/${env.task_name}/demo${data.num_demos}_scale${mi_loss_scale}_${mine_mi_loss_scale}
+    name: trifinger_temporal_fuse_${env.task_name}_${algo.algorithm}_demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}_${now:%m%d}_${now:%H%M}_seed${train.seed}
+    group: trifinger_${env.task_name}_${algo.algorithm}
+    dir: ./wandb/cortexbench/${ft_method}_temporal_fuse/${algo.algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}_scale${train.train.mi_loss_scale}_${train.mine_mi_loss_scale}
 
 hydra:
     run:
-        dir: ./outputs/cortexbench/${ft_method}_temporal_fuse/${algorithm}/${policy.embedding_type}/trifinger/${env.task_name}/demo${data.num_demos}_scale${mi_loss_scale}_${mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+        dir: ./outputs/cortexbench/${ft_method}_temporal_fuse/${algo.algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}_scale${train.train.mi_loss_scale}_${train.mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
     sweep:
-        dir: ./outputs/cortexbench/${ft_method}_temporal_fuse/${algorithm}/${policy.embedding_type}/trifinger/${env.task_name}/demo${data.num_demos}_scale${mi_loss_scale}_${mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+        dir: ./outputs/cortexbench/${ft_method}_temporal_fuse/${algo.algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}_scale${train.train.mi_loss_scale}_${train.mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
         subdir: ${hydra.job.num}
 
-mi_loss_scale: 0.005
-mine_mi_loss_scale: 0.1

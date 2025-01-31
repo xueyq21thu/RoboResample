@@ -22,7 +22,7 @@ class Voltron(BaseModel):
         if cfg.policy.embedding == 'v-cond-small' or cfg.policy.embedding == 'v-conda-base':
             load_path = os.path.join(cfg.policy.embedding_dir, 'voltron', cfg.policy.embedding)
             self.feature_extractor = load_voltron("v-cond", load_path=load_path, only_return_model=True)
-            if self.cfg.ft_method == 'partial_ft':
+            if cfg.train.ft_method == 'partial_ft':
                 for param in self.feature_extractor.parameters():
                     param.requires_grad = False
             self.vector_extractor = instantiate_extractor(self.feature_extractor)()
@@ -31,7 +31,7 @@ class Voltron(BaseModel):
         
     def forward(self, data, return_latent=False):
         cfg = self.cfg
-        if cfg.ft_method == 'full_ft':
+        if cfg.train.ft_method == 'full_ft':
             preprocessed_imgs = self.process_data(data["input"]["img"])
             embeddings = self.get_representations(preprocessed_imgs.to(self.device))  # (b*t, emb_dim) -> (b, t, emb_dim)
         else:

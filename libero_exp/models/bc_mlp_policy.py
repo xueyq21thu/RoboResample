@@ -1,6 +1,6 @@
-import robomimic.utils.tensor_utils as TensorUtils
 import torch
 import torch.nn as nn
+import robomimic.utils.tensor_utils as TensorUtils
 
 from .base_policy import BasePolicy
 from .modules.mlp import DynamicMLP

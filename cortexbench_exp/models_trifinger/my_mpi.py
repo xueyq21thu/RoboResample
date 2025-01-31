@@ -23,7 +23,7 @@ class MPI(BaseModel):
             root_dir = os.path.join(cfg.policy.embedding_dir, 'mpi', cfg.policy.embedding)
             language_model_path = "/baishuanghao/model/distilbert-base-uncased"
             self.feature_extractor = load_mpi(root_dir, language_model_path=language_model_path)
-            if self.cfg.ft_method == 'partial_ft':
+            if cfg.train.ft_method == 'partial_ft':
                 for param in self.feature_extractor.parameters():
                     param.requires_grad = False
             self.vector_extractor = instantiate_extractor(self.feature_extractor)()
@@ -32,7 +32,7 @@ class MPI(BaseModel):
 
     def forward(self, data, return_latent=False):
         cfg = self.cfg
-        if cfg.ft_method == 'full_ft':
+        if cfg.train.ft_method == 'full_ft':
             preprocessed_imgs = self.process_data(data["input"]["img"])
             embeddings = self.get_representations(preprocessed_imgs.to(self.device))  # (b*t, emb_dim) -> (b, t, emb_dim)
         else:

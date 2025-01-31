@@ -1,8 +1,20 @@
-import robomimic.utils.tensor_utils as TensorUtils
+'''
+@article{liu2024libero,
+  title={Libero: Benchmarking knowledge transfer for lifelong robot learning},
+  author={Liu, Bo and Zhu, Yifeng and Gao, Chongkai and Feng, Yihao and Liu, Qiang and Zhu, Yuke and Stone, Peter},
+  journal={Advances in Neural Information Processing Systems},
+  volume={36},
+  year={2024}
+}
+
+Adapted from https://github.com/Lifelong-Robot-Learning/LIBERO
+'''
+
 import torch
 import torch.nn as nn
-
 from einops import rearrange
+import robomimic.utils.tensor_utils as TensorUtils
+
 from .modules.rgb_modules import *
 from .modules.language_modules import *
 from .modules.transformer_modules import *

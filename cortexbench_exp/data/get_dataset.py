@@ -41,7 +41,7 @@ def get_dataset(config, policy=None, return_demo_score=False):
         print("\n\n Unsupported environment suite.")
         quit()
 
-    if config.ft_method == 'full_ft':
+    if config.train.ft_method == 'full_ft':
         dataset = SequenceDataset_Full_FT(
             demo_paths,
             history_window=config.env.history_window,
@@ -49,7 +49,7 @@ def get_dataset(config, policy=None, return_demo_score=False):
             use_spatial=config.policy.use_spatial,
             proprio_key=config.env.proprio_key,
         )
-    elif config.ft_method == 'partial_ft':
+    elif config.train.ft_method == 'partial_ft':
         dataset = SequenceDataset_Partial_FT(
             demo_paths,
             history_window=config.env.history_window,

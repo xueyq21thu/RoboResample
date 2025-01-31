@@ -11,7 +11,7 @@ import logging
 import numpy as np
 
 from ..data.get_dataset import get_dataset
-from ..models import ResNet, ViT, ViT_2, R3M, VC1, MVP, Voltron, MPI
+from ..models import ResNet, ViT, R3M, VC1, MVP, Voltron, MPI
 from ..utils.env_utils import build_env
 from ..utils.train_utils import configure_cluster_GPUs, setup_optimizer, setup_lr_scheduler
 from ..utils.record_utils import init_wandb, MetricLogger, AverageMeter, MetricMeter

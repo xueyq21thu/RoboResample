@@ -1,6 +1,5 @@
 from .my_resnet import ResNet
 from .my_vit import ViT
-from .my_vit_2 import ViT_2
 from .my_r3m import R3M
 from .my_vc1 import VC1
 from .my_mvp import MVP

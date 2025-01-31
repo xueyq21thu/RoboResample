@@ -13,6 +13,8 @@ batch_size: 512
 print_frequency: 5
 save_frequency: 10               # frequency of epochs for saving policies
 grad_clip: 100.
+mi_loss_scale: 0.005
+mine_mi_loss_scale: 0.1
 
 # resume
 resume: False
