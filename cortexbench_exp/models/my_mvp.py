@@ -1,3 +1,16 @@
+'''
+@inproceedings{radosavovic2023real,
+  title={Real-world robot learning with masked visual pre-training},
+  author={Radosavovic, Ilija and Xiao, Tete and James, Stephen and Abbeel, Pieter and Malik, Jitendra and Darrell, Trevor},
+  booktitle={Conference on Robot Learning},
+  pages={416--426},
+  year={2023},
+  organization={PMLR}
+}
+
+Adapted from https://github.com/ir413/mvp and https://github.com/siddk/voltron-robotics
+'''
+
 import os
 import torch
 import torch.nn as nn

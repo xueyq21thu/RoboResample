@@ -1,3 +1,16 @@
+'''
+@article{majumdar2023we,
+  title={Where are we in the search for an artificial visual cortex for embodied intelligence?},
+  author={Majumdar, Arjun and Yadav, Karmesh and Arnaud, Sergio and Ma, Jason and Chen, Claire and Silwal, Sneha and Jain, Aryan and Berges, Vincent-Pierre and Wu, Tingfan and Vakil, Jay and others},
+  journal={Advances in Neural Information Processing Systems},
+  volume={36},
+  pages={655--677},
+  year={2023}
+}
+
+Adapted from https://github.com/facebookresearch/eai-vc
+'''
+
 import os
 from vc_models.models.vit.model_utils import load_model as load_vc1
 

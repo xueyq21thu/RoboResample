@@ -1,8 +1,6 @@
 wandb/
 outputs/
-processed_data/
 cache/
-try/
 *.mp4
 *.pt
 *.pth

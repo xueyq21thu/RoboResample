@@ -1,3 +1,14 @@
+'''
+@inproceedings{karamcheti2023language,
+  title={Language-driven representation learning for robotics},
+  author={Karamcheti, Siddharth and Nair, Suraj and Chen, Annie S and Kollar, Thomas and Finn, Chelsea and Sadigh, Dorsa and Liang, Percy},
+  booktitle={Robotics: Science and Systems},
+  year={2023}
+}
+
+Adapted from  and https://github.com/siddk/voltron-robotics
+'''
+
 import os
 import torch
 import numpy as np

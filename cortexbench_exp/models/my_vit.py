@@ -1,3 +1,14 @@
+'''
+@article{dosovitskiy2020image,
+  title={An image is worth 16x16 words: Transformers for image recognition at scale},
+  author={Dosovitskiy, Alexey},
+  booktitle={International Conference on Learning Representations},
+  year={2021}
+}
+
+Adapted from https://github.com/google-research/vision_transformer
+'''
+
 from .base_model import BaseModel
 from .modules.transformer_modules import TransformerEncoder
 

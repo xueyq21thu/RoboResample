@@ -1,3 +1,14 @@
+'''
+@article{zeng2024learning,
+  title={Learning Manipulation by Predicting Interaction},
+  author={Zeng, Jia and Bu, Qingwen and Wang, Bangjun and Xia, Wenke and Chen, Li and Dong, Hao and Song, Haoming and Wang, Dong and Hu, Di and Luo, Ping and others},
+  booktitle={Robotics: Science and Systems},
+  year={2024}
+}
+
+Adapted from https://github.com/OpenDriveLab/MPI
+'''
+
 import os
 from mpi import load_mpi
 

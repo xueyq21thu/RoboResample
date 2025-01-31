@@ -1,3 +1,16 @@
+'''
+@inproceedings{nair2023r3m,
+  title={R3M: A Universal Visual Representation for Robot Manipulation},
+  author={Nair, Suraj and Rajeswaran, Aravind and Kumar, Vikash and Finn, Chelsea and Gupta, Abhinav},
+  booktitle={Conference on Robot Learning},
+  pages={892--909},
+  year={2023},
+  organization={PMLR}
+}
+
+Adapted from https://github.com/facebookresearch/r3m and https://github.com/siddk/voltron-robotics
+'''
+
 import os
 import torch
 import numpy as np
