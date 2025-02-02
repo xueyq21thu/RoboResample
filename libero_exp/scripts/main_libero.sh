@@ -1,7 +1,9 @@
 #!/bin/bash
 
-export MUJOCO_GL=osmesa
-export PYOPENGL_PLATFORM=osmesa
+# export MUJOCO_GL=osmesa
+# export PYOPENGL_PLATFORM=osmesa
+export MUJOCO_GL=egl
+export PYOPENGL_PLATFORM=egl
 
 source activate bcib
 
