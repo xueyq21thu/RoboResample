@@ -189,9 +189,10 @@ class SequenceDataset(torch.utils.data.Dataset):
                 self.demos = self.demos[:train_demo_num]  
             else:
                 if val_demo_num != None:
-                    if val_demo_num > self.n_demos - train_demo_num:
-                        val_demo_num = self.n_demos - train_demo_num
-                    self.demos = self.demos[train_demo_num: train_demo_num+val_demo_num]
+                    if val_demo_num < self.n_demos - train_demo_num:
+                        self.demos = self.demos[train_demo_num: train_demo_num+val_demo_num]
+                    else:
+                        self.demos = self.demos[-val_demo_num:]
                 else:   
                     self.demos = self.demos[train_demo_num:]  
 

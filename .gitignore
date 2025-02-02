@@ -5,6 +5,7 @@ cache/
 *.pt
 *.pth
 *.ckpt
+libero/
 
 *~
 .hydra

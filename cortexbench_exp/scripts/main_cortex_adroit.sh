@@ -36,6 +36,6 @@ for TASK_NAME in "${TASK_NAMES[@]}"; do
         train.seed=${SEED} \
         policy.embedding_type=${MODEL_TYPE} \
         train.mine_mi_loss_scale=${MINE} \
-        train.mi_loss_scale=${MI} 
+        train.mi_loss_scale=${MI}
 done
     

@@ -26,5 +26,3 @@ wandb:
   group: ${data.env_name}_${experiment}_rnn
   dir: ./wandb/${env.env_type}/${experiment}/rnn/${data.env_name}/ratio${data.train_ratio}
 
-mi_loss_scale: 0.01
-mine_mi_loss_scale: 0.1

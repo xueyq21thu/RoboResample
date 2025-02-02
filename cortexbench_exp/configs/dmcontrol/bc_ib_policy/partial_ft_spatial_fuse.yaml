@@ -16,15 +16,15 @@ debug: False
 wandb:
     use_wandb: true
     project: cortexbench_${env.env_name}_${policy.embedding_type}_${train.ft_method}
-    name: ${env.env_name}_${policy.fuse_method}_${env.task_name}_${algorithm}_demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}_${now:%m%d}_${now:%H%M}_seed${train.seed}
-    group: ${env.env_name}_${env.task_name}_${algorithm}
-    dir: ./wandb/cortexbench/${train.ft_method}_${policy.fuse_method}/${algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}
+    name: ${env.env_name}_${policy.fuse_method}_${env.task_name}_${algo.algorithm}_demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}_${now:%m%d}_${now:%H%M}_seed${train.seed}
+    group: ${env.env_name}_${env.task_name}_${algo.algorithm}
+    dir: ./wandb/cortexbench/${train.ft_method}_${policy.fuse_method}/${algo.algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}
 
 hydra:
     run:
-        dir: ./outputs/cortexbench/${train.ft_method}_${policy.fuse_method}/${algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+        dir: ./outputs/cortexbench/${train.ft_method}_${policy.fuse_method}/${algo.algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
     sweep:
-        dir: ./outputs/cortexbench/${train.ft_method}_${policy.fuse_method}/${algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+        dir: ./outputs/cortexbench/${train.ft_method}_${policy.fuse_method}/${algo.algorithm}/${policy.embedding_type}/${env.env_name}/${env.task_name}/demo${data.num_demos}_scale${train.mi_loss_scale}_${train.mine_mi_loss_scale}/${now:%m%d}_${now:%H%M}_seed${train.seed}
         subdir: ${hydra.job.num}
 
 train.mi_loss_scale: 0.005

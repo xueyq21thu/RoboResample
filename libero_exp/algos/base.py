@@ -12,7 +12,6 @@ from torch.utils.data import ConcatDataset, DataLoader, RandomSampler
 import logging
 from tqdm import tqdm
 from lightning.fabric import Fabric
-from libero.lifelong.utils import compute_flops
 from libero.libero.benchmark import get_benchmark
 from libero.lifelong.datasets import SequenceVLDataset
 
@@ -167,7 +166,6 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
 
         val_datasets = [SequenceVLDataset(ds, emb) for (ds, emb) in zip(val_manip_datasets, task_embs)]
         val_concat_dataset = ConcatDataset(val_datasets)
-        cfg.eval.batch_size = 1
         self.val_loader = DataLoader(
             val_concat_dataset,
             batch_size=cfg.eval.batch_size,
@@ -474,65 +472,3 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
         torch.cuda.empty_cache()
 
         return all_results
-    
-    def grad_visual(self, tag="val"):
-        cfg = self.cfg
-        checkpoint = os.path.join(cfg.eval.load_path, "model_final.ckpt")
-        _ = self.model.load(checkpoint)
-        self.model.eval()
-
-        import numpy as np
-        import matplotlib.pyplot as plt
-        print('Evaluating...')
-        for data in tqdm(self.val_loader):
-            data = self.model.preprocess_input(data, augmentation=False)
-            attn = self.model(data, return_attn=True)   # ()
-
-            head = 0
-            batch_idx = 0
-            attn_weights = attn[batch_idx, head, :, :].detach().cpu().numpy()
-            cls_attention = attn_weights[0, 1:]  # (129,)
-            num_patches = int(np.sqrt(cls_attention.shape[-1]))  # 计算 Patch Grid 尺寸 (≈ 16x16)
-            # attention_map = cls_attention.reshape(num_patches, num_patches)  # 变成 2D
-
-            image = data['obs']['agentview_rgb'][0][0] * 255
-            image = image.permute(1, 2, 0).cpu().numpy()
-            image = image.astype(np.uint8)
-            plt.imshow(image)
-            plt.axis("off")  # 去掉坐标轴
-            plt.title("Agent View RGB")
-            plt.savefig('1.jpg', bbox_inches='tight', pad_inches=0)
-            
-            heatmap_image = self.visualize_attention(image, attn_weights)
-            plt.imshow(heatmap_image)
-            plt.axis("off")  # 去掉坐标轴
-            plt.title("Agent View RGB")
-            plt.savefig('2.jpg', bbox_inches='tight', pad_inches=0)
-
-            print(1)
-
-    def visualize_attention(self, image, attention_map, alpha=0.5, threshold=0.2):
-        import numpy as np
-        import cv2
-        """
-        叠加 Attention Heatmap 到原始图像
-        :param image: 输入图像 (H, W, 3) (RGB 格式)
-        :param attention_map: 注意力权重 (H', W')，通常是 16x16 或 32x32
-        :param alpha: 热力图透明度
-        """
-        # 调整 Attention Map 大小，使其匹配原图
-        attention_map = cv2.resize(attention_map, (image.shape[1], image.shape[0]), interpolation=cv2.INTER_LINEAR)
-
-        # 归一化 Attention Map
-        attention_map = (attention_map - np.min(attention_map)) / (np.max(attention_map) - np.min(attention_map))
-
-        # 应用阈值：低于 threshold 的设为 0（透明）
-        attention_map[attention_map < threshold] = 0
-
-        # 伪彩色映射
-        heatmap = cv2.applyColorMap(np.uint8(255 * attention_map), cv2.COLORMAP_JET)
-
-        # 叠加热力图到原始图像
-        overlay = cv2.addWeighted(image, 1 - alpha, heatmap, alpha, 0)
-
-        return overlay

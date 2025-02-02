@@ -8,7 +8,7 @@ source activate bcib
 
 EVAL_ALL=True
 LOAD_PATHS=(
-    # the directory of testing model
+/baishuanghao/code2/BC-IB/outputs/cortexbench/partial_ft_spatial_fuse/bc_policy/VC1/dmcontrol/dmc_cheetah_run-v1/demo10/0201_1719_seed0    # the directory of testing model
 )
 
 # bash cortexbench_exp/scripts/eval_cortex_dmc.sh

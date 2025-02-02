@@ -16,5 +16,28 @@
 
 
 
+
+## :hammer: Installation
+<details>
+<summary><b>Basics</b></summary>
+
+```bash
+# clone project
+git clone https://github.com/BaiShuanghao/BC-IB.git
+cd BC-IB
+
+# crerate conda environment
+conda create -n bcib python=3.8
+conda activate bcib
+
+# install PyTorch, please refer to https://pytorch.org/get-started/previous-versions/ for other CUDA versions
+# e.g. cuda 11.8:
+pip install torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 --index-url https://download.pytorch.org/whl/cu118
+
+# install basic packages
+pip3 install -r requirements.txt
+```
+</details>
+
 pip install gym==0.23.1
 conda install pinocchio -c conda-forge

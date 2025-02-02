@@ -3,30 +3,26 @@
 export MUJOCO_GL=osmesa
 export PYOPENGL_PLATFORM=osmesa
 
-cd /baishuanghao/code/BC-IB
-# source activate /root/miniconda3/envs/libero
 source activate bcib
 
-ENV_NAME=$1             # ["libero_spatial", "libero_object", "libero_goal", "libero_90", "libero_10", "libero_100"]
+ENV_NAME=$1             # ["libero_spatial", "libero_object", "libero_goal", "libero_10"]
 POLICY_NAME=$2          # ['bc_policy', 'bc_ib_policy']
-CONFIG_NAME=$3          # backbone_name: ['rnn', 'transformer', 'vilt']
-TRAIN_RATIO=$4
+CONFIG_NAME=$3          # backbone_name: ['mlp', 'rnn', 'transformer', 'vilt']
+TRAIN_RATIO=$4          
 SEED=$5
 
 MI=1e-4
 MINE=0.1
 
-# /baishuanghao/code/BC-IB/libero_exp/scripts/main_libero.sh 'libero_spatial' 'bc_policy' 'transformer' 0.9 0
-# /baishuanghao/code/BC-IB/libero_exp/scripts/main_libero.sh 'libero_object' 'bc_policy' 'transformer' 0.9 0
-# /baishuanghao/code/BC-IB/libero_exp/scripts/main_libero.sh 'libero_goal' 'bc_policy' 'transformer' 0.9 0
-# /baishuanghao/code/BC-IB/libero_exp/scripts/main_libero.sh 'libero_10' 'bc_policy' 'transformer' 0.9 0
-# /baishuanghao/code/BC-IB/libero_exp/scripts/main_libero.sh 'libero_90' 'bc_policy' 'transformer' 0.9 0
+# bash libero_exp/scripts/main_libero.sh 'libero_spatial' 'bc_policy' 'transformer' 0.9 0
+# bash libero_exp/scripts/main_libero.sh 'libero_object' 'bc_policy' 'vilt' 0.9 0
+# bash libero_exp/scripts/main_libero.sh 'libero_goal' 'bc_policy' 'rnn' 0.9 0
+# bash libero_exp/scripts/main_libero.sh 'libero_10' 'bc_policy' 'mlp' 0.9 0
 
-# /baishuanghao/code/BC-IB/libero_exp/scripts/main_libero.sh 'libero_spatial' 'bc_ib_policy' 'transformer' 0.9 0
-# /baishuanghao/code/BC-IB/libero_exp/scripts/main_libero.sh 'libero_object' 'bc_ib_policy' 'transformer' 0.9 0
-# /baishuanghao/code/BC-IB/libero_exp/scripts/main_libero.sh 'libero_goal' 'bc_ib_policy' 'transformer' 0.9 0
-# /baishuanghao/code/BC-IB/libero_exp/scripts/main_libero.sh 'libero_10' 'bc_ib_policy' 'transformer' 0.9 0
-# /baishuanghao/code/BC-IB/libero_exp/scripts/main_libero.sh 'libero_90' 'bc_ib_policy' 'transformer' 0.9 0
+# bash libero_exp/scripts/main_libero.sh 'libero_spatial' 'bc_ib_policy' 'transformer' 0.9 0
+# bash libero_exp/scripts/main_libero.sh 'libero_object' 'bc_ib_policy' 'vilt' 0.9 0
+# bash libero_exp/scripts/main_libero.sh 'libero_goal' 'bc_ib_policy' 'rnn' 0.9 0
+# bash libero_exp/scripts/main_libero.sh 'libero_10' 'bc_ib_policy' 'mlp' 0.9 0
 
 python train_libero.py \
     --config-path=libero_exp/configs/${POLICY_NAME} \
@@ -34,6 +30,5 @@ python train_libero.py \
     data.env_name=${ENV_NAME} \
     train.seed=${SEED} \
     data.train_ratio=${TRAIN_RATIO} \
-    mine_mi_loss_scale=${MINE} \
-    mi_loss_scale=${MI} \
-    train.n_epochs=100
+    train.mine_mi_loss_scale=${MINE} \
+    train.mi_loss_scale=${MI}

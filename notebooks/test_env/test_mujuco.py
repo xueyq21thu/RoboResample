@@ -1,5 +1,5 @@
-import mujoco_py
 import os
+import mujoco_py
 
 
 mj_path = mujoco_py.utils.discover_mujoco()

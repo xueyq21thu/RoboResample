@@ -207,7 +207,7 @@ class Task:
             img_goal = expert_demo_dict["image_60"][-1]  
             img_goal = policy.process_data(img_goal)
             
-            if policy.train.ft_method == 'partial_ft':    
+            if policy.ft_method == 'partial_ft':    
                 embedding = policy.get_representations(img.to(self.device))
                 embedding_goal = policy.get_representations(img_goal.to(self.device))
                 input_dict = {
@@ -217,7 +217,7 @@ class Task:
                     "o_goal_pos": self.o_goal_pos,
                     "o_goal_pos_rel": self.o_goal_pos_rel,
                 }
-            elif policy.train.ft_method == 'full_ft':
+            elif policy.ft_method == 'full_ft':
                 input_dict = {
                     "ft_state": ft_state,
                     "img": img,

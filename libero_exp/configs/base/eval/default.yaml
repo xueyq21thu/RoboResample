@@ -8,6 +8,7 @@ eval_every: ${train.save_freq}
 
 # rollout
 enable_rollout: false
+eval_all: false   # if false, only evaluate on final checkpoint
 
 # other
 use_mp: true

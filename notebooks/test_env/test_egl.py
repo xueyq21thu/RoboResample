@@ -7,30 +7,30 @@ os.environ['PYOPENGL_PLATFORM'] = 'egl'
 
 try:
     import OpenGL.EGL as egl
-    print("EGL库已成功导入")
-    
-    # 初始化EGL
+    print("EGL library successfully imported")
+
+    # Initialize EGL
     display = egl.eglGetDisplay(egl.EGL_DEFAULT_DISPLAY)
     if display == egl.EGL_NO_DISPLAY:
-        print("无法获取EGL显示")
+        print("Failed to get EGL display")
         exit(1)
-    
-    # 初始化EGL
+
+    # Initialize EGL
     major, minor = egl.EGLint(), egl.EGLint()
     if not egl.eglInitialize(display, major, minor):
-        print("EGL初始化失败")
+        print("EGL initialization failed")
         exit(1)
-    
-    print(f"EGL版本: {major.value}.{minor.value}")
-    
-    # 获取支持的客户端API
+
+    print(f"EGL version: {major.value}.{minor.value}")
+
+    # Get supported client APIs
     apis = egl.eglQueryString(display, egl.EGL_CLIENT_APIS)
-    print("支持的客户端API:", apis)
-    
-    # 关闭EGL
+    print("Supported client APIs:", apis)
+
+    # Terminate EGL
     egl.eglTerminate(display)
-    
+
 except ImportError:
-    print("无法导入EGL库")
+    print("Failed to import EGL library")
 except Exception as e:
-    print(f"发生错误: {e}")
+    print(f"Error occurred: {e}")

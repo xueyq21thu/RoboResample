@@ -19,6 +19,8 @@ save_freq: 10
 
 grad_clip: 100.
 loss_scale: 1.0
+mi_loss_scale: 1e-4
+mine_mi_loss_scale: 0.1
 
 # resume training
 resume: false
