@@ -1,8 +1,8 @@
-import robomimic.utils.tensor_utils as TensorUtils
 import torch
 import torch.distributions as D
 import torch.nn as nn
 import torch.nn.functional as F
+import robomimic.utils.tensor_utils as TensorUtils
 
 
 class DeterministicHead(nn.Module):

@@ -1,9 +1,11 @@
 #!/bin/bash
 
-export MUJOCO_GL=osmesa
-export PYOPENGL_PLATFORM=osmesa
+# export MUJOCO_GL=osmesa
+# export PYOPENGL_PLATFORM=osmesa
+export MUJOCO_GL=egl
+export PYOPENGL_PLATFORM=egl
 
-source activate bcib
+source activate bcib3
 
 EVAL_ALL=$1
 
@@ -11,6 +13,7 @@ EVAL_ALL=$1
 # bash libero_exp/scripts/eval_libero_all.sh True
 
 LOAD_PATHS=(
+    # the directory of the checkpoints
 )
 
 for LOAD_PATH in "${LOAD_PATHS[@]}"; do

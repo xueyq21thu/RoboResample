@@ -44,11 +44,13 @@ setup(
     install_requires=[
         "numpy >=1.19.1",
         "scipy >=1.5.4",
-        "pin >=0.4.3",  # pinocchio 2.4.7
-        "pybullet >=3.0.8",
+        "pin ==2.7.0",  # pinocchio 2.4.7
+        "pybullet ==3.2.6",
         "gym >=0.21.0",     # 0.23.1
         "opencv-python >=4.1.2.30",
         "pyyaml >=5.3.1",
+        'cmeel ==0.53.3',
+        'eigenpy ==3.5.1',
     ],
     extras_require={
         "test": ["pytest"],

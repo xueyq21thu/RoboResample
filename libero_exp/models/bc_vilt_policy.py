@@ -158,7 +158,7 @@ class BCViLTPolicy(BasePolicy):
             x, self.encoders[0].h, self.encoders[1].w
         )
 
-    def spatial_encode(self, data, return_attn=False):
+    def spatial_encode(self, data):
         # 1. encode image
         img_encoded = []
         for img_name in self.image_encoders.keys():
@@ -196,10 +196,7 @@ class BCViLTPolicy(BasePolicy):
 
         # 5. pass through transformer
         encoded = rearrange(encoded, "b t n e -> (b t) n e")  # (B*T, :, E) = (B*10, 130, 128)
-        out = self.spatial_transformer(encoded, return_attn=return_attn)
-        if return_attn:
-            out = out[6]
-            return out
+        out = self.spatial_transformer(encoded)
         out = out[:, 0]  # extract spatial token as summary at o_t  (B*10, 128)
         out = self.spatial_down_sample(out).view(B, T, 1, -1)  # (B, T, 1, E') = (B, 10, 1, 64)
 
@@ -229,11 +226,7 @@ class BCViLTPolicy(BasePolicy):
 
         return x[:, :, 0]                           # (B, T, E) = (64, 10, 64)
 
-    def forward(self, data, return_latent=False, return_attn=False):
-        if return_attn:
-            attn = self.spatial_encode(data, return_attn) 
-            return attn
-
+    def forward(self, data, return_latent=False):
         x = self.spatial_encode(data)  # (B, T, E)
         if return_latent:
             z, z0 = self.temporal_encode(x, return_latent)  # x & z: (B, T, num_modality, E) = (B, 10, 4, 64)

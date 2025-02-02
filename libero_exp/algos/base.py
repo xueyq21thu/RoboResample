@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader, RandomSampler
 from torch.utils.data import ConcatDataset, DataLoader, RandomSampler
 import logging
 from tqdm import tqdm
+import OpenGL.GL as gl      # do not remove this package
 from lightning.fabric import Fabric
 from libero.libero.benchmark import get_benchmark
 from libero.lifelong.datasets import SequenceVLDataset
@@ -66,8 +67,12 @@ class AlgoMeta(type):
 class BaseAlgo(nn.Module, metaclass=AlgoMeta):
     def __init__(self, cfg, inference=False, device='cuda'):
         super().__init__()
+        if cfg.data.env_name == 'libero_10':
+            cfg.env.max_steps = 1000
+
         if inference:
             self.device = device
+            cfg.train.device = device
             if device == 'cuda':
                 self.fabric = Fabric(accelerator="cuda", devices=list(cfg.train.train_gpus), strategy="ddp")
                 self.fabric.launch()
@@ -75,7 +80,7 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
             load_path = cfg.eval.load_path
             self.eval_result_dir = os.path.join(load_path, "eval_results")
             os.makedirs(self.eval_result_dir, exist_ok=True)
-            if cfg.eval_all:
+            if cfg.eval.eval_all:
                 model_list = ["model_final.ckpt", "model_10.ckpt", "model_20.ckpt", "model_30.ckpt", "model_40.ckpt"]
             else:
                 model_list = ["model_final.ckpt"]

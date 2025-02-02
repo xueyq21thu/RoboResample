@@ -109,9 +109,9 @@ class BasePolicy(nn.Module, metaclass=PolicyMeta):
             return data
         else:
             data = TensorUtils.recursive_dict_list_tuple_apply(
-                data, {torch.Tensor: lambda x: x.unsqueeze(dim=1)}  # add time dimension
+                data, {torch.Tensor: lambda x: x.unsqueeze(dim=1)}  # add time dimension. if need, .to(self.device)
             )
-            data["task_emb"] = data["task_emb"].squeeze(1)
+            data["task_emb"] = data["task_emb"].squeeze(1)  #.to(self.device)
         return data
 
     def compute_loss(self, data, reduction="mean", augmentation=None):

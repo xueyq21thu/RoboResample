@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# export MUJOCO_GL=osmesa
-# export PYOPENGL_PLATFORM=osmesa
-export MUJOCO_GL=egl
-export PYOPENGL_PLATFORM=egl
+export MUJOCO_GL=osmesa
+export PYOPENGL_PLATFORM=osmesa
+# export MUJOCO_GL=egl
+# export PYOPENGL_PLATFORM=egl
 
-source activate bcib
+source activate bcib3
 
 ENV_NAME=$1             # ["libero_spatial", "libero_object", "libero_goal", "libero_10"]
 POLICY_NAME=$2          # ['bc_policy', 'bc_ib_policy']

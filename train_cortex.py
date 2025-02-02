@@ -1,4 +1,5 @@
 import os
+os.environ['PYOPENGL_PLATFORM'] = 'egl'
 os.environ["MUJOCO_GL"] = "egl"
 
 import hydra

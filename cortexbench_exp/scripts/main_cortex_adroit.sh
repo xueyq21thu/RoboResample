@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLdispatch.so.0      # if libgpu_partition.so confilts with gym
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${HOME}/.mujoco/mujoco200/bin
 export MUJOCO_GL=egl
 
@@ -36,6 +37,8 @@ for TASK_NAME in "${TASK_NAMES[@]}"; do
         train.seed=${SEED} \
         policy.embedding_type=${MODEL_TYPE} \
         train.mine_mi_loss_scale=${MINE} \
-        train.mi_loss_scale=${MI}
+        train.mi_loss_scale=${MI} \
+        data.data_dir=/baishuanghao/data/vc-1/adroit-expert-v1.0 \
+        policy.embedding_dir=/baishuanghao/model
 done
     

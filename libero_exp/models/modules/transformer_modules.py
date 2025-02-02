@@ -215,7 +215,7 @@ class TransformerDecoder(nn.Module):
             ).repeat_interleave(self.num_elements, dim=-2).unsqueeze(0)
             # (1, N, N), N = seq_len * num_elements
 
-    def forward(self, x, mask=None, return_attn=False):
+    def forward(self, x, mask=None):
         for layer_idx, (att_norm, att, ff_norm, ff) in enumerate(self.layers):
             if mask is not None:
                 x = x + drop_path(att(att_norm(x), mask))
@@ -227,8 +227,6 @@ class TransformerDecoder(nn.Module):
             if not self.training:
                 self.attention_output[layer_idx] = att.att_weights
             x = x + self.drop_path(ff(ff_norm(x)))
-        if return_attn:
-            return self.attention_output
         return x
 
     @property
