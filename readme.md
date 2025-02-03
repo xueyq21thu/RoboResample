@@ -1,6 +1,6 @@
 <div align="center">
 
-#  <img src="documents/logo.jpg" alt="Logo" width="100"/> Rethinking Latent Representations in Behavior Cloning: An Information Bottleneck Approach for Robot Manipulation
+##  Rethinking Latent Representations in Behavior Cloning: An Information Bottleneck Approach for Robot Manipulation
 
 
 [![python](https://img.shields.io/badge/-Python_3.8-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
