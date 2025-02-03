@@ -25,7 +25,7 @@ class MPI(BaseModel):
         cfg.policy.embedding_dim = 384
         if cfg.policy.embedding == 'mpi-base' or 'mpi-small':
             root_dir = os.path.join(cfg.policy.embedding_dir, 'mpi', cfg.policy.embedding)
-            language_model_path = "/baishuanghao/model/distilbert-base-uncased"
+            language_model_path = "/root/model/distilbert-base-uncased"
             self.feature_extractor = load_mpi(root_dir, language_model_path=language_model_path)
             if cfg.train.ft_method == 'partial_ft':
                 for param in self.feature_extractor.parameters():

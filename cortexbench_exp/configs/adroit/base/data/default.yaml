@@ -4,4 +4,4 @@ image_width: 256
 image_height: 256
 action_dim: 24
 history_window: 3               
-data_dir: ???
+data_dir: /root/data/vc-1/adroit-expert-v1.0

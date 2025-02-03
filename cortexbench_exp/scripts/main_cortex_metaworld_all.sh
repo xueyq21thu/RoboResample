@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLdispatch.so.0      # if libgpu_partition.so confilts with gym
+# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLdispatch.so.0      # if libgpu_partition.so confilts with gym and robosuite
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${HOME}/.mujoco/mujoco200/bin
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia
-# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
-export MUJOCO_GL=egl
+export CUDA_VISIBLE_DEVICES=0
 
 cd /baishuanghao/code/BC-IB
 source activate bcib

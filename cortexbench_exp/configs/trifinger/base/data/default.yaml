@@ -7,5 +7,5 @@ image_width: 256
 image_height: 256
 action_dim: 9
 history_window: 1              
-data_dir: ???
+data_dir: /root/data/vc-1/trifinger-demos
 split_dir: ./third_party/benchmarks/eai-vc/cortexbench/trifinger_vc/assets/bc_demos

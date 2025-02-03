@@ -4,5 +4,4 @@ image_width: 256
 image_height: 256
 action_dim: 6
 history_window: 3               
-data_dir: ???
-data_parallel: True
+data_dir: /root/data/vc-1/dmc-expert-v1.0

@@ -2,8 +2,8 @@ import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # os.environ['MUJOCO_GL'] = 'osmesa'
 # os.environ['PYOPENGL_PLATFORM'] = 'osmesa'        
-os.environ['MUJOCO_GL'] = 'egl'             
-os.environ['PYOPENGL_PLATFORM'] = 'egl'
+# os.environ['MUJOCO_GL'] = 'egl'             
+# os.environ['PYOPENGL_PLATFORM'] = 'egl'
 
 import torch
 import datetime

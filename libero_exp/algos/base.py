@@ -11,7 +11,6 @@ from torch.utils.data import DataLoader, RandomSampler
 from torch.utils.data import ConcatDataset, DataLoader, RandomSampler
 import logging
 from tqdm import tqdm
-import OpenGL.GL as gl      # do not remove this package
 from lightning.fabric import Fabric
 from libero.libero.benchmark import get_benchmark
 from libero.lifelong.datasets import SequenceVLDataset

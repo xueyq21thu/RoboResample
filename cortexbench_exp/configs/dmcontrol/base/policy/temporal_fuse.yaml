@@ -1,7 +1,7 @@
 embedding_type: VC1
 embedding: vc1_vitb                     # choice of embedding network
 embedding_dim: 768
-embedding_dir: ???
+embedding_dir: /root/model
 
 fuse_method: temporal_fuse
 use_spatial: False

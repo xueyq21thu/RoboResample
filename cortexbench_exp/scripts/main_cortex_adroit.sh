@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLdispatch.so.0      # if libgpu_partition.so confilts with gym
+# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLdispatch.so.0      # if libgpu_partition.so confilts with gym and robosuite
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${HOME}/.mujoco/mujoco200/bin
-export MUJOCO_GL=egl
+export CUDA_VISIBLE_DEVICES=0
 
 source activate bcib
 
@@ -12,8 +12,7 @@ MODEL_TYPE=$3
 SEED=$4
 
 ENV_NAME=adroit
-# TASK_NAMES=(pen-v0 relocate-v0)
-TASK_NAMES=(pen-v0)
+TASK_NAMES=(pen-v0 relocate-v0)
 
 MINE=0.1
 MI=5e-3
@@ -37,8 +36,6 @@ for TASK_NAME in "${TASK_NAMES[@]}"; do
         train.seed=${SEED} \
         policy.embedding_type=${MODEL_TYPE} \
         train.mine_mi_loss_scale=${MINE} \
-        train.mi_loss_scale=${MI} \
-        data.data_dir=/baishuanghao/data/vc-1/adroit-expert-v1.0 \
-        policy.embedding_dir=/baishuanghao/model
+        train.mi_loss_scale=${MI}
 done
     

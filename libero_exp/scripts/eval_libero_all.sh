@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# export MUJOCO_GL=osmesa
-# export PYOPENGL_PLATFORM=osmesa
-export MUJOCO_GL=egl
-export PYOPENGL_PLATFORM=egl
+# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLdispatch.so.0      # if libgpu_partition.so confilts with gym and robosuite
+export MUJOCO_GL=osmesa
+export PYOPENGL_PLATFORM=osmesa
+# export MUJOCO_GL=egl
+# export PYOPENGL_PLATFORM=egl
 
 source activate bcib3
 

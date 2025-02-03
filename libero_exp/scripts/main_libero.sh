@@ -1,11 +1,12 @@
 #!/bin/bash
 
+# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLdispatch.so.0      # if libgpu_partition.so confilts with gym and robosuite
 export MUJOCO_GL=osmesa
 export PYOPENGL_PLATFORM=osmesa
 # export MUJOCO_GL=egl
 # export PYOPENGL_PLATFORM=egl
 
-source activate bcib3
+source activate bcib
 
 ENV_NAME=$1             # ["libero_spatial", "libero_object", "libero_goal", "libero_10"]
 POLICY_NAME=$2          # ['bc_policy', 'bc_ib_policy']
