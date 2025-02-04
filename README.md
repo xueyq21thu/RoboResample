@@ -8,7 +8,7 @@
 [![hydra](https://img.shields.io/badge/Config-Hydra_1.2-89b8cd)](https://hydra.cc/)
 [![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/ashleve/lightning-hydra-template#license)
 
-[**Project Page**]() | [**Paper**]() | [**arXiv**]()
+[**Project Page**](https://baishuanghao.github.io/BC-IB.github.io/) | [**Paper**](assets/BC-IB_paper.pdf) | [**arXiv**]()
 
 [Shuanghao Bai](https://baishuanghao.github.io/), [Wanqi Zhou](https://ellezwq.github.io/), [Pengxiang Ding](https://dingpx.github.io/),  Wei Zhao, [Donglin Wang](https://milab.westlake.edu.cn/), [Badong Chen](https://gr.xjtu.edu.cn/web/chenbd/home).
 
@@ -18,7 +18,7 @@
 ## 🌟 Highlights
 
 <div align="center">
-  <img src="documents/intro.jpg" alt="Logo" width="60%">
+  <img src="assets/intro.jpg" alt="Logo" width="60%">
 </div>
 
 > **<p align="justify"> Abstract:** *Behavior Cloning (BC) is a widely adopted visual imitation learning method in robot manipulation.
