@@ -8,7 +8,7 @@ source activate bcib
 
 EVAL_ALL=True
 LOAD_PATHS=(
-/baishuanghao/code2/BC-IB/outputs/cortexbench/full_ft_spatial_fuse/bc_ib_policy/ResNet/trifinger/move/demo100_scale0.005_0.1/0201_1745_seed0    # the directory of testing model
+    # the directory of testing model
 )
 
 # bash cortexbench_exp/scripts/eval_cortex_trifinger.sh

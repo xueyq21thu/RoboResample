@@ -10,7 +10,7 @@ train_gpus: [0]
 mix_precision: false
 use_augmentation: true
 
-n_epochs: 50 # 200 #50         
+n_epochs: 50        
 batch_size: 64
 num_workers: 8
 
