@@ -8,7 +8,7 @@
 [![hydra](https://img.shields.io/badge/Config-Hydra_1.2-89b8cd)](https://hydra.cc/)
 [![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/ashleve/lightning-hydra-template#license)
 
-[**Project Page**](https://baishuanghao.github.io/BC-IB.github.io/) | [**Paper**](https://baishuanghao.github.io/BC-IB.github.io/static/pdfs/BC-IB_paper.pdf) | [**arXiv**]()
+[**Project Page**](https://baishuanghao.github.io/BC-IB.github.io/) | [**Paper**](https://baishuanghao.github.io/BC-IB.github.io/static/pdfs/BC-IB_paper.pdf) | [**arXiv**](https://arxiv.org/abs/2502.02853)
 
 [Shuanghao Bai](https://baishuanghao.github.io/), [Wanqi Zhou](https://ellezwq.github.io/), [Pengxiang Ding](https://dingpx.github.io/),  Wei Zhao, [Donglin Wang](https://milab.westlake.edu.cn/), [Badong Chen](https://gr.xjtu.edu.cn/web/chenbd/home).
 
@@ -70,6 +70,12 @@ If you have any questions, please create an issue on this repository or contact 
 
 If you find our work useful, please consider citing:
 ```
+@article{bai2025rethinking,
+  title={Rethinking Latent Representations in Behavior Cloning: An Information Bottleneck Approach for Robot Manipulation},
+  author={Bai, Shuanghao and Zhou, Wanqi and Ding, Pengxiang and Zhao, Wei and Wang, Donglin and Chen, Badong},
+  journal={arXiv preprint arXiv:2502.02853},
+  year={2025}
+}
 ```
 
 
