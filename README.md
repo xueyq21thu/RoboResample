@@ -10,7 +10,7 @@
 
 [**Project Page**](https://baishuanghao.github.io/BC-IB.github.io/) | [**Paper**](https://baishuanghao.github.io/BC-IB.github.io/static/pdfs/BC-IB_paper.pdf) | [**arXiv**](https://arxiv.org/abs/2502.02853)
 
-[Shuanghao Bai](https://baishuanghao.github.io/), [Wanqi Zhou](https://ellezwq.github.io/), [Pengxiang Ding](https://dingpx.github.io/),  Wei Zhao, [Donglin Wang](https://milab.westlake.edu.cn/), [Badong Chen](https://gr.xjtu.edu.cn/web/chenbd/home).
+[Shuanghao Bai](https://baishuanghao.github.io/), [Wanqi Zhou](https://ellezwq.github.io/), [Pengxiang Ding](https://dingpx.github.io/),  Wei Zhao, [Donglin Wang](https://milab.westlake.edu.cn/), [Badong Chen](https://gr.xjtu.edu.cn/web/chenbd/home)
 
 </div>
 
