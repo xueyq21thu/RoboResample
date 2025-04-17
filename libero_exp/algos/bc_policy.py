@@ -35,6 +35,13 @@ class BC_Policy(BaseAlgo):
         x, z, dist = self.model(data, return_latent=True)
         if self.cfg.policy.policy_type == 'BCMLPPolicy':
             bc_loss = self.model.policy_head.loss_fn(dist, data["actions"][:, -1], reduction="mean")
+        elif self.cfg.policy.policy_type == 'BCDPPolicy':
+            repeated_diffusion_steps = self.cfg.policy.policy_head.network_kwargs.repeated_diffusion_steps
+            actions = data["actions"]
+            actions_repeated = actions.repeat(repeated_diffusion_steps, 1, 1)
+            dist = dist.mean(dim=1, keepdim=True)
+            features_repeated = dist.repeat(repeated_diffusion_steps, 1, 1)
+            bc_loss = self.model.policy_head.loss(actions_repeated, features_repeated) 
         else:
             bc_loss = self.model.policy_head.loss_fn(dist, data["actions"], reduction="mean")
 

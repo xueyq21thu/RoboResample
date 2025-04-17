@@ -8,21 +8,19 @@ defaults:
   - ../base/env@env: default
 
 
-# record
-experiment: "bc_policy"     # tag for wandb and log dir   
 experiment_dir: ???
 
 hydra:
   run:
-    dir: ./outputs/libero/${experiment}/rnn/${data.env_name}/ratio${data.train_ratio}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+    dir: ./outputs/libero/${algo.algo_name}/rnn/${data.env_name}/ratio${data.train_ratio}/${now:%m%d}_${now:%H%M}_seed${train.seed}
   sweep:
-    dir: ./outputs/libero/${experiment}/rnn/${data.env_name}/ratio${data.train_ratio}/${now:%m%d}_${now:%H%M}_seed${train.seed}
+    dir: ./outputs/libero/${algo.algo_name}/rnn/${data.env_name}/ratio${data.train_ratio}/${now:%m%d}_${now:%H%M}_seed${train.seed}
     subdir: ${hydra.job.num}
     
 wandb:
   use_wandb: true
   project: bc-ib-rnn
-  name: ${data.env_name}_${experiment}_rnn_${now:%m%d}_${now:%H%M}_seed${train.seed}_ratio${data.train_ratio}_${hydra:job.num}
-  group: ${data.env_name}_${experiment}_rnn
-  dir: ./wandb/${env.env_type}/${experiment}/rnn/${data.env_name}/ratio${data.train_ratio}
+  name: ${data.env_name}_${algo.algo_name}_rnn_${now:%m%d}_${now:%H%M}_seed${train.seed}_ratio${data.train_ratio}_${hydra:job.num}
+  group: ${data.env_name}_${algo.algo_name}_rnn
+  dir: ./wandb/${env.env_type}/${algo.algo_name}/rnn/${data.env_name}/ratio${data.train_ratio}
 

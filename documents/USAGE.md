@@ -14,7 +14,7 @@ Please refer to [scipts files](libero_exp/scripts) of LIBERO.
 To start an experiment, please choose:
 - `Benchmark` from `['libero_spatial', 'libero_object', 'libero_goal', 'libero_10']`
 - `Policy` from `['bc_policy', 'bc_ib_policy']`
-- `Backbone` from `['mlp', 'rnn', 'transformer', 'vilt']`
+- `Backbone` from `['mlp', 'rnn', 'transformer', 'vilt', 'dp']`
 
 ### Training 
 

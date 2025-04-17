@@ -14,7 +14,7 @@ class BC_IB_Policy(BaseAlgo):
         if not inference:
             if cfg.policy.policy_type == 'BCRNNPolicy':
                 input_dim = cfg.policy.rnn_hidden_size * cfg.data.seq_len
-            elif cfg.policy.policy_type == 'BCTransformerPolicy':
+            elif cfg.policy.policy_type == 'BCTransformerPolicy' or cfg.policy.policy_type == 'BCDPPolicy':
                 input_dim = cfg.policy.temporal_transformer.transformer_head_output_size * cfg.data.seq_len * 5
             elif cfg.policy.policy_type == 'BCViLTPolicy':
                 input_dim = cfg.policy.temporal_transformer.transformer_head_output_size * cfg.data.seq_len * 4
@@ -70,6 +70,13 @@ class BC_IB_Policy(BaseAlgo):
         x, z, dist = self.model(data, return_latent=True)
         if self.cfg.policy.policy_type == 'BCMLPPolicy':
             bc_loss = self.model.policy_head.loss_fn(dist, data["actions"][:, -1], reduction="mean")
+        elif self.cfg.policy.policy_type == 'BCDPPolicy':
+            repeated_diffusion_steps = self.cfg.policy.policy_head.network_kwargs.repeated_diffusion_steps
+            actions = data["actions"]
+            actions_repeated = actions.repeat(repeated_diffusion_steps, 1, 1)
+            dist = dist.mean(dim=1, keepdim=True)
+            features_repeated = dist.repeat(repeated_diffusion_steps, 1, 1)
+            bc_loss = self.model.policy_head.loss(actions_repeated, features_repeated) 
         else:
             bc_loss = self.model.policy_head.loss_fn(dist, data["actions"], reduction="mean")
         mi_loss = self.mine(x, z) * self.cfg.train.mi_loss_scale

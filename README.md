@@ -58,7 +58,7 @@ Refer to [DOWNLOAD_MODEL.md](documents/DOWNLOAD_MODEL.md) for instructions on do
 
 ## 📈 Usage
 
-Refer to [usage.md](documents/usage.md) for instructions on training and evaluation.
+Refer to [USAGE.md](documents/USAGE.md) for instructions on training and evaluation.
 
 
 ## 📨 Contact

@@ -16,7 +16,7 @@ from libero.libero.benchmark import get_benchmark
 from libero.lifelong.datasets import SequenceVLDataset
 
 from ..data.get_dataset import get_dataset
-from ..models import BCRNNPolicy, BCTransformerPolicy, BCViLTPolicy, BCMLPPolicy
+from ..models import BCRNNPolicy, BCTransformerPolicy, BCViLTPolicy, BCMLPPolicy, BCDPPolicy
 from ..utils.data_utils import get_task_embs
 from ..utils.env_utils import build_env
 from ..utils.train_utils import setup_optimizer, setup_lr_scheduler

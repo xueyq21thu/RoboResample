@@ -19,11 +19,13 @@ MINE=0.1
 # bash libero_exp/scripts/main_libero_all.sh 'libero_spatial' 'bc_policy' 'transformer' 0.9 0
 # bash libero_exp/scripts/main_libero_all.sh 'libero_object' 'bc_policy' 'vilt' 0.9 0
 # bash libero_exp/scripts/main_libero_all.sh 'libero_goal' 'bc_policy' 'rnn' 0.9 0
+# bash libero_exp/scripts/main_libero_all.sh 'libero_goal' 'bc_policy' 'dp' 0.9 0
 # bash libero_exp/scripts/main_libero_all.sh 'libero_10' 'bc_policy' 'mlp' 0.9 0
 
 # bash libero_exp/scripts/main_libero_all.sh 'libero_spatial' 'bc_ib_policy' 'transformer' 0.9 0
 # bash libero_exp/scripts/main_libero_all.sh 'libero_object' 'bc_ib_policy' 'vilt' 0.9 0
 # bash libero_exp/scripts/main_libero_all.sh 'libero_goal' 'bc_ib_policy' 'rnn' 0.9 0
+# bash libero_exp/scripts/main_libero_all.sh 'libero_goal' 'bc_ib_policy' 'dp' 0.9 0
 # bash libero_exp/scripts/main_libero_all.sh 'libero_10' 'bc_ib_policy' 'mlp' 0.9 0
 
 SEEDS=(0 1 2)
