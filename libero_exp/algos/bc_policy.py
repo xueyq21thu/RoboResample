@@ -2,18 +2,14 @@ import torch
 from tqdm import tqdm
 
 from .base import BaseAlgo
-from ..utils.mmd_utils import MMD_loss
-from ..utils.kl_div_utils import KL_div_loss_with_knn
 
 
 class BC_Policy(BaseAlgo):
     def __init__(self, cfg, inference=False, device='cuda'):
         super().__init__(cfg, inference, device)
-        self.mmd = MMD_loss()
-        self.kl_div = KL_div_loss_with_knn()
 
     def forward_backward(self, data):
-        bc_loss, mmd, kl_div = self.compute_loss(data)
+        bc_loss = self.compute_loss(data)
         loss = bc_loss
 
         self.optimizer.zero_grad()
@@ -24,13 +20,11 @@ class BC_Policy(BaseAlgo):
         ret_dict = {
             "loss": loss.item(),
             "bc_loss": bc_loss.item(),
-            "mmd": mmd.item(),
-            "kl_div": kl_div.item(),
         }
 
         return ret_dict
     
-    def compute_loss(self, data, augmentation=None, return_meric=True):
+    def compute_loss(self, data, augmentation=None):
         data = self.model.preprocess_input(data, augmentation=augmentation)
         x, z, dist = self.model(data, return_latent=True)
         if self.cfg.policy.policy_type == 'BCMLPPolicy':
@@ -44,13 +38,6 @@ class BC_Policy(BaseAlgo):
             bc_loss = self.model.policy_head.loss(actions_repeated, features_repeated) 
         else:
             bc_loss = self.model.policy_head.loss_fn(dist, data["actions"], reduction="mean")
-
-        if return_meric:
-            with torch.no_grad():
-                mmd = self.mmd(x, z)
-                kl_div = self.kl_div(x, z, k=5)
-
-            return bc_loss, mmd, kl_div
 
         return bc_loss
     
@@ -86,7 +73,4 @@ class BC_Policy(BaseAlgo):
             out_dict[f"{tag}/{k}"] = tot_loss_dict[f"{k}"] / tot_items
 
         return out_dict
-    
-
-
     

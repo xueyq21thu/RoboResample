@@ -67,12 +67,6 @@ class Mine(nn.Module):
         return -t + second_term
 
     def get_mi(self, x, z, z_marg=None):
-        if isinstance(x, np.ndarray):
-            x = torch.from_numpy(x).float()
-        if isinstance(z, np.ndarray):
-            z = torch.from_numpy(z).float()
-
-        with torch.no_grad():
-            mi = -self.forward(x, z, z_marg)
+        mi = -self.forward(x, z, z_marg)
         return mi
 

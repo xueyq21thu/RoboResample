@@ -3,8 +3,6 @@ import torch.nn as nn
 
 from .base import BaseAlgo
 from ..utils.mine_utils import Mine
-from ..utils.mmd_utils import MMD_loss
-from ..utils.kl_div_utils import KL_div_loss_with_knn
 
 
 class BC_IB_Policy(BaseAlgo):
@@ -35,11 +33,8 @@ class BC_IB_Policy(BaseAlgo):
             self.mine.model = self.mine.model.to(self.device)
             self.mine_optimizer = torch.optim.Adam(self.mine.model.parameters(), lr=1e-5)
 
-            self.mmd = MMD_loss()
-            self.kl_div = KL_div_loss_with_knn()
-
     def forward_backward(self, data):
-        bc_loss, mi_loss, mmd, kl_div = self.compute_loss(data)
+        bc_loss, mi_loss = self.compute_loss(data)
         loss = bc_loss + mi_loss
 
         self.optimizer.zero_grad()
@@ -58,23 +53,15 @@ class BC_IB_Policy(BaseAlgo):
             "bc_loss": bc_loss.item(),
             "mi_loss": mi_loss.item(),
             "mine": -mi_loss_2.item(),
-            "mmd": mmd.item(),
-            "kl_div": kl_div.item(),
         }
 
         return ret_dict
     
-    def compute_loss(self, data, return_metric=True):
+    def compute_loss(self, data):
         x, z, dist = self.model(data, return_latent=True)
         bc_loss = self.model.policy_head.loss_fn(dist, data["actions"].to(self.device), reduction="mean")
-        mi_loss = self.mine(x, z) * self.cfg.train.mi_loss_scale
-        
-        if return_metric:
-            with torch.no_grad():
-                mmd = self.mmd(x.detach(), z.detach())
-                kl_div = self.kl_div(x.detach(), z.detach(), k=5)
-
-        return bc_loss, mi_loss, mmd, kl_div
+        mi_loss = self.mine.get_mi(x, z) * self.cfg.train.mi_loss_scale
+        return bc_loss, mi_loss
     
     def compute_mine_model_loss(self, data):
         with torch.no_grad():
