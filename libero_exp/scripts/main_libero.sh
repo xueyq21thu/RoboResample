@@ -14,7 +14,7 @@ CONFIG_NAME=$3          # backbone_name: ['mlp', 'rnn', 'transformer', 'vilt']
 TRAIN_RATIO=$4          
 SEED=$5
 
-MI=1e-4
+MI=1e-3
 MINE=0.1
 
 # bash libero_exp/scripts/main_libero.sh 'libero_spatial' 'bc_policy' 'transformer' 0.9 0

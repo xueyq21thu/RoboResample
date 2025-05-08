@@ -4,8 +4,6 @@ from tqdm import tqdm
 
 from .base import BaseAlgo
 from ..utils.mine_utils import Mine
-from ..utils.mmd_utils import MMD_loss
-from ..utils.kl_div_utils import KL_div_loss_with_knn
 
 
 class BC_IB_Policy(BaseAlgo):
