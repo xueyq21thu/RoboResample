@@ -1,6 +1,6 @@
 <div align="center">
 
-#  Rethinking Latent Representations in Behavior Cloning: An Information Bottleneck Approach for Robot Manipulation
+#  Rethinking Latent Redundancy in Behavior Cloning: An Information Bottleneck Approach for Robot Manipulation
 
 [![python](https://img.shields.io/badge/-Python_3.8-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![pytorch](https://img.shields.io/badge/PyTorch_2.0+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
@@ -71,7 +71,7 @@ If you have any questions, please create an issue on this repository or contact 
 If you find our work useful, please consider citing:
 ```
 @article{bai2025rethinking,
-  title={Rethinking Latent Representations in Behavior Cloning: An Information Bottleneck Approach for Robot Manipulation},
+  title={Rethinking Latent Redundancy in Behavior Cloning: An Information Bottleneck Approach for Robot Manipulation},
   author={Bai, Shuanghao and Zhou, Wanqi and Ding, Pengxiang and Zhao, Wei and Wang, Donglin and Chen, Badong},
   journal={arXiv preprint arXiv:2502.02853},
   year={2025}
