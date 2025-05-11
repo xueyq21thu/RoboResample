@@ -31,7 +31,7 @@ datasets
 In contrast, our setting uses the raw LIBERO data with lower-resolution images and no filtering.
 
 
-#### LIBERO Results
+<!-- #### LIBERO Results
 
 | Method           | Image Encoder | Fuse Module | Policy Head | LIBERO-Goal | LIBERO-Object | LIBERO-Spatial | LIBERO-Long | Avg   |
 |:------------------:|:----------------:|:--------------:|:--------------:|:----------------:|:-----------------:|:--------------:|:--------:|:--------:|
@@ -44,7 +44,7 @@ In contrast, our setting uses the raw LIBERO data with lower-resolution images a
 | BC-VILT          | S-Trans.       | T-Trans.     | MLP          | 76.17        | 43.00          | 67.17           | 6.50         | 48.21      |
 | **BC+VILT+IB**   | S-Trans.       | T-Trans.     | MLP          | **83.83**    | **52.00**      | **70.67**       | **8.67**     | **53.79**  |
 | BC-DP            | ResNet         | T-Trans.     | DP Head      | -            | -              | -               | 78.00        | -          |
-| **BC-DP+IB**     | ResNet         | T-Trans.     | DP Head      | -            | -              | -               | **84.00**    | -          |
+| **BC-DP+IB**     | ResNet         | T-Trans.     | DP Head      | -            | -              | -               | **84.00**    | -          | -->
 
 
 ### 2. CortexBench
@@ -85,7 +85,7 @@ cortexbench
           └── ...
 ```
 
-#### CortexBench Results
+<!-- #### CortexBench Results
 
 | Method       | Image Encoder | Adroit | Meta-World | DMControl | TriFinger | Avg   |
 |:------------:|:--------------:|:---------:|:-----------:|:-----------:|:-----------:|:-----------:|
@@ -102,4 +102,4 @@ cortexbench
 | VC-1         | ViT-B          | 24.67  | 77.60       | 53.82      | 72.05      | 57.04  |
 | **VC-1+IB**  | ViT-B          | **26.00** | **82.40**   | **54.93**  | **80.13**  | **59.28** |
 | MPI          | ViT-S          | 34.67  | 66.40       | 59.45      | 61.91      | 55.61  |
-| **MPI+IB**   | ViT-S          | **36.67** | **69.33**   | **61.41**  | **63.34**  | **57.69** |
+| **MPI+IB**   | ViT-S          | **36.67** | **69.33**   | **61.41**  | **63.34**  | **57.69** | -->
