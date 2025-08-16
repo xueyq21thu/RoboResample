@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLdispatch.so.0      # if libgpu_partition.so confilts with gym and robosuite
-export MUJOCO_GL=osmesa
-export PYOPENGL_PLATFORM=osmesa
+export MUJOCO_GL=egl
+export PYOPENGL_PLATFORM=egl
 # export MUJOCO_GL=egl
 # export PYOPENGL_PLATFORM=egl
 
-source activate bcib
+# source activate bcib
 
 ENV_NAME=$1             # ["libero_spatial", "libero_object", "libero_goal", "libero_10"]
 POLICY_NAME=$2          # ['bc_policy', 'bc_ib_policy']
@@ -27,11 +27,12 @@ MINE=0.1
 # bash libero_exp/scripts/main_libero.sh 'libero_goal' 'bc_ib_policy' 'rnn' 0.9 0
 # bash libero_exp/scripts/main_libero.sh 'libero_10' 'bc_ib_policy' 'mlp' 0.9 0
 
-python train_libero.py \
+MUJOCO_GL=egl python train_libero.py \
     --config-path=libero_exp/configs/${POLICY_NAME} \
     --config-name=${CONFIG_NAME} \
     data.env_name=${ENV_NAME} \
     train.seed=${SEED} \
     data.train_ratio=${TRAIN_RATIO} \
     train.mine_mi_loss_scale=${MINE} \
-    train.mi_loss_scale=${MI}
+    train.mi_loss_scale=${MI} 
+    # data.dataset_path=/mnt/disk_2/guanxing/xueyq21thu/libero

@@ -6,11 +6,11 @@ defaults:
 # training
 seed: 0
 device: "cuda"
-train_gpus: [0]
+train_gpus: [0, 1, 2, 3]
 mix_precision: false
 use_augmentation: true
 
-n_epochs: 50        
+n_epochs: 100        
 batch_size: 64
 num_workers: 8
 
@@ -28,4 +28,4 @@ resume_path: ""
 
 # degug
 debug: false
-dry: false                      # dry run 
+dry: false

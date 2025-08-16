@@ -6,6 +6,7 @@ import torch
 from torch import nn
 
 from .dit import DiT
+import torch.nn.functional as F
 from . import gaussian_diffusion as gd
 from .respace import SpacedDiffusion, space_timesteps
 
@@ -124,4 +125,39 @@ class DPHead(nn.Module):
                                                learn_sigma = False
                                                )
         return self.ddim_diffusion
+
+
+    
+
+    def sample_loss(self, x_start, z, reduction='mean'):
+        """
+        Calculates the diffusion loss.
+
+        Args:
+            x_start: The clean data (actions). Shape (N, T, D).
+            z: The condition. Shape (N, 1, E).
+            reduction (str): 'mean' to average the loss, 'none' to return
+                             loss per sample.
+        """
+        # 1. Sample random timesteps
+        t = torch.randint(0, self.diffusion.num_timesteps, (x_start.shape[0],), device=x_start.device).long()
+        
+        # 2. Add noise to the data (forward process)
+        noise = torch.randn_like(x_start)
+        x_t = self.diffusion.q_sample(x_start=x_start, t=t, noise=noise)
+        
+        # 3. Predict the noise using the network
+        model_kwargs = dict(z=z)
+        predicted_noise = self.net(x_t, t, **model_kwargs)
+        
+        # 4. Calculate the MSE loss
+        loss = F.mse_loss(predicted_noise, noise, reduction='none') # <-- KEY CHANGE
+        
+        # Reshape and sum over features/time to get loss per sample
+        loss = loss.mean(dim=list(range(1, loss.dim()))) # Shape: (N,)
+
+        if reduction == 'mean':
+            return loss.mean()
+        elif reduction == 'none':
+            return loss # <-- Return loss for each item in the batch
     

@@ -104,15 +104,34 @@ def raw_obs_to_tensor_obs(obs, task_emb, cfg, device=None):
                     obs_key=obs_name,
                 ).float()
             )
+    # for k in range(env_num):
+    #     for obs_name in all_obs_keys:
+    #         raw_obs = obs[k][cfg.data.obs_key_mapping[obs_name]]
+
+    #         # [::-1, ::-1] 反转
+    #         if obs_name in ["agentview_rgb", "eye_in_hand_rgb"]:
+    #             raw_obs = raw_obs[::-1, ::-1].copy() 
+
+    #         data["obs"][obs_name].append(
+    #             ObsUtils.process_obs(
+    #                 torch.from_numpy(raw_obs),
+    #                 obs_key=obs_name,
+    #             ).float()
+    #         )
+
 
     for key in data["obs"]:
         data["obs"][key] = torch.stack(data["obs"][key])
 
-    if device == None:
-        data = TensorUtils.map_tensor(data, lambda x: safe_device(x, device=cfg.train.device))
-    elif device == 'cpu':
-        data = TensorUtils.map_tensor(data, lambda x: safe_device(x))
-    
+    # if device == None:
+    #     data = TensorUtils.map_tensor(data, lambda x: safe_device(x, device=cfg.train.device))
+    # elif device == 'cpu':
+    #     data = TensorUtils.map_tensor(data, lambda x: safe_device(x))
+
+    target_device = device if device is not None else cfg.train.device
+    if target_device is not None:
+        data = TensorUtils.map_tensor(data, lambda x: x.to(target_device))
+
     return data
 
 

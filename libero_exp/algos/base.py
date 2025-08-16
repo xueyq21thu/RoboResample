@@ -24,6 +24,11 @@ from ..utils.video_utils import VideoWriter
 from ..utils.results_utils import rollout, merge_results, save_success_rate
 from ..utils.record_utils import init_wandb, MetricLogger, BestAvgLoss, AverageMeter, MetricMeter
 
+# import the data writer
+from ..data.data_writer import HDF5Writer
+from calql.model import Critic
+from ..models.adversarial_sampler import AdversarialActionSampler
+
 REGISTERED_ALGOS = {}
 
 
@@ -109,6 +114,9 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
             self.val_loader = self.fabric.setup_dataloaders(self.val_loader)
 
         self.cfg = cfg
+
+        # set adv_sample mode
+        # self.sample_mode = cfg.train.adv_sample_mode
 
     def build_dataloader(self, cfg):
         # load dataset
@@ -412,6 +420,7 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
 
     def inference_evaluate(self, checkpoint, video_save_dir):
         cfg = self.cfg
+        # sample_mode = self.sample_mode
         
         # load model
         benchmark = get_benchmark(cfg.data.env_name)(cfg.data.task_order_index)
@@ -419,6 +428,10 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
                                 obs_modality=cfg.data.obs.modality, return_shape_meta=True)
         model = eval(cfg.policy.policy_type)(cfg, shape_meta)
         _ = model.load(checkpoint)
+
+        # # Critic Model
+        # if sample_mode:
+        #     critic_path = self.cfg.eval.critic_path
 
         # set optimizer
         cfg.train.optimizer.kwargs.lr = 0.
@@ -436,43 +449,154 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
             env_idx_start = env_num_each_rank * self.fabric.global_rank
             env_idx_end = min(env_num_each_rank * (self.fabric.global_rank + 1), len(cfg.env.env_name))
 
+        # ADversarial sampler
+        adversarial_sampler = None
+        if cfg.sampler.enable:
+            logging.info("Adversarial sampling is ENABLED.")
+            
+            # --- 2.1 Load the pre-trained Cal-QL Critic ---
+            critic_path = cfg.sampler.critic_checkpoint_path
+            logging.info(f"Loading Cal-QL Critic from: {critic_path}")
+            
+            # Use dimensions from the config file
+            state_dim = cfg.sampler.state_dim
+            action_dim = 7
+
+            calql_critic = Critic(state_dim, action_dim).to(self.device)
+            try:
+                calql_critic.load_state_dict(torch.load(critic_path, map_location=self.device))
+                logging.info("Cal-QL Critic loaded successfully.")
+            except Exception as e:
+                logging.error(f"FATAL: Failed to load Critic checkpoint from {critic_path}. Error: {e}")
+                # We should not proceed without the critic if sampling is enabled.
+                raise e
+            
+            # --- 2.2 Instantiate the AdversarialActionSampler ---
+            adversarial_sampler = AdversarialActionSampler(
+                diffusion_policy=model,
+                calql_critic=calql_critic,
+                device=self.device,
+                num_samples=cfg.sampler.num_samples,
+                q_value_threshold=cfg.sampler.q_value_threshold
+            )
+            # Attach the intervention condition to the sampler object for clean passing
+            adversarial_sampler.intervention_threshold = cfg.sampler.intervention_threshold
+        else:
+            logging.info("Adversarial sampling is DISABLED. Running standard rollout.")
+
         # save video
         video_writer = VideoWriter(video_save_dir, save_video=True, single_video=False) 
 
-        all_results = []
-        for env_idx in range(env_idx_start, env_idx_end):
-            print(f"evaluating ckp {checkpoint} on env {cfg.env.env_name[env_idx]} in ({env_idx_start}, {env_idx_end})")
-        
-            if cfg.eval.debug:
-                cfg.env.max_steps = 10
-                cfg.env.task_id = [0]
-            else:
-                cfg.env.task_id = None # [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        # --- 3. Initialize Data Writer (if enabled) ---
+        data_writer = None
+        if cfg.eval.save_rollouts:
+            logging.info(f"Rollout data saving is ENABLED.")
+            output_hdf5_path = f'rollout/rollout_{cfg.data.env_name}.hdf5'
+            output_hdf5_path_succ = f'rollout/rollout_{cfg.data.env_name}_succ.hdf5'
+            
+            # Define the observation keys to be saved in the HDF5 file.
+            # This should match the keys expected by your dataset loader.
+            obs_keys_to_save = [
+                "agentview_image", 
+                "robot0_eye_in_hand_image", 
+                "robot0_gripper_qpos",
+                "robot0_joint_pos",
+                "object", # It's good practice to save object states as well
+            ]
 
-            env = build_env(cfg, img_size=cfg.data.img_size, env_idx_start_end=(env_idx, env_idx+1), **cfg.env)
-            result = rollout(
-                cfg, env, model, 
-                num_env_rollouts=cfg.env.num_env_rollouts // cfg.env.env_num, 
-                horizon=cfg.env.max_steps,
-                return_wandb_video=False,
-                success_vid_first=False, 
-                fail_vid_first=False,
-                video_writer=video_writer,
-                device=self.device,
+            data_writer = HDF5Writer(
+                data_path=output_hdf5_path,
+                obs_keys=obs_keys_to_save
+            )
+            data_writer_succ = HDF5Writer(
+                data_path=output_hdf5_path_succ,
+                obs_keys=obs_keys_to_save
             )
 
-            if self.device == 'cuda':
-                self.fabric.barrier()
 
-            all_results.append(result)
-            del env
+        all_results = []
+        try:
+            for env_idx in range(env_idx_start, env_idx_end):
+                print(f"evaluating ckp {checkpoint} on env {cfg.env.env_name[env_idx]} in ({env_idx_start}, {env_idx_end})")
+            
+                if cfg.eval.debug:
+                    cfg.env.max_steps = 10
+                    cfg.env.task_id = [0]
+                else:
+                    cfg.env.task_id = None # [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-        all_results = merge_results(all_results, compute_avg=False)
+                env = build_env(cfg, img_size=cfg.data.img_size, env_idx_start_end=(env_idx, env_idx+1), **cfg.env)
 
-        del model
-        del optimizer
-        # torch._C._cuda_clearCublasWorkspaces()
-        gc.collect()
-        torch.cuda.empty_cache()
+                # if not saving the rollout data
+                if cfg.eval.save_rollouts and not cfg.sampler.enable:
+                    result = rollout(
+                        cfg, env, model, 
+                        num_env_rollouts=cfg.env.num_env_rollouts // cfg.env.env_num, 
+                        horizon=cfg.env.max_steps,
+                        return_wandb_video=False,
+                        success_vid_first=False, 
+                        fail_vid_first=False,
+                        video_writer=video_writer,
+                        device=self.device,
+                        data_writer=data_writer,
+                        data_writer_succ=data_writer_succ
+                    )
+                elif cfg.eval.save_rollouts and cfg.sampler.enable:
+                    result = rollout(
+                        cfg, env, model, 
+                        num_env_rollouts=cfg.env.num_env_rollouts // cfg.env.env_num, 
+                        horizon=cfg.env.max_steps,
+                        return_wandb_video=False,
+                        success_vid_first=False, 
+                        fail_vid_first=False,
+                        video_writer=video_writer,
+                        device=self.device,
+                        data_writer=data_writer,
+                        data_writer_succ=data_writer_succ,
+                        adversarial_sampler=adversarial_sampler
+                    )
+                elif not cfg.eval.save_rollouts and not cfg.sampler.enable:
+                    result = rollout(
+                        cfg, env, model, 
+                        num_env_rollouts=cfg.env.num_env_rollouts // cfg.env.env_num, 
+                        horizon=cfg.env.max_steps,
+                        return_wandb_video=False,
+                        success_vid_first=False, 
+                        fail_vid_first=False,
+                        video_writer=video_writer,
+                        device=self.device,
+                    )
+                else:
+                    result = rollout(
+                        cfg, env, model, 
+                        num_env_rollouts=cfg.env.num_env_rollouts // cfg.env.env_num, 
+                        horizon=cfg.env.max_steps,
+                        return_wandb_video=False,
+                        success_vid_first=False, 
+                        fail_vid_first=False,
+                        video_writer=video_writer,
+                        device=self.device,
+                        adversarial_sampler=adversarial_sampler
+                    )
+
+                if self.device == 'cuda':
+                    self.fabric.barrier()
+
+                all_results.append(result)
+                del env
+
+            all_results = merge_results(all_results, compute_avg=False)
+
+        finally:
+            del model
+            del optimizer
+            # torch._C._cuda_clearCublasWorkspaces()
+            gc.collect()
+            torch.cuda.empty_cache()
+
+            # clean the data writer
+            if data_writer:
+                data_writer.close()
 
         return all_results
+

@@ -110,10 +110,12 @@ class VideoWriter:
                 self.last_images[idx] = None
 
             if not done:
-                self.image_buffer[idx].append(obs[camera_name][::-1])
+                # self.image_buffer[idx].append(obs[camera_name][::-1])
+                self.image_buffer[idx].append(obs[camera_name][::-1, ::-1])
             else:
                 if self.last_images[idx] is None:
-                    self.last_images[idx] = obs[camera_name][::-1]
+                    # self.last_images[idx] = obs[camera_name][::-1]
+                    self.last_images[idx] = obs[camera_name][::-1, ::-1]
                 original_image = np.copy(self.last_images[idx])
 
                 if boundary:
@@ -142,6 +144,13 @@ class VideoWriter:
     def get_last_info(self, num_env_rollout, dones, env_description, task_idx):    
         self.success = dones
         self.env_description = env_description.split('/')[-1]
+        # get inserted flag at the end _inserted from env_description
+        self.inserted = False
+        if "_inserted" in env_description:
+            self.inserted = True
+            # remove the _inserted flag
+            self.env_description = env_description.replace("_inserted", "")
+            print(f"get inserted flag: {env_description}")
         self.num_env_rollout = num_env_rollout
         self.task_idx = task_idx
 
@@ -159,7 +168,10 @@ class VideoWriter:
                 video_writer.close()
             else:
                 for idx, suffix in zip(self.image_buffer.keys(), self.success):
-                    video_name = os.path.join(final_video_path, f"rollout{self.num_env_rollout}_env{idx}_{str(suffix)}.mp4")
+                    if self.inserted:
+                        video_name = os.path.join(final_video_path, f"rollout{self.num_env_rollout}_env{idx}_{str(suffix)}_inserted.mp4")
+                    else:
+                        video_name = os.path.join(final_video_path, f"rollout{self.num_env_rollout}_env{idx}_{str(suffix)}.mp4")
                     video_writer = imageio.get_writer(video_name, fps=self.fps)
                     for im in self.image_buffer[idx]:
                         video_writer.append_data(im)

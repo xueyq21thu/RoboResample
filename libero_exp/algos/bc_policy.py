@@ -49,7 +49,15 @@ class BC_Policy(BaseAlgo):
 
         print('Evaluating...')
         for data in tqdm(self.val_loader):
-            bc_loss, mmd, kl_div = self.compute_loss(data, augmentation=False)
+            out = self.compute_loss(data, augmentation=False)
+
+            if isinstance(out, (tuple, list)) and len(out) == 3:
+                bc_loss, mmd, kl_div = out
+            else:
+                bc_loss = out
+                mmd = torch.tensor(0.0)
+                kl_div = torch.tensor(0.0)
+
             loss = bc_loss
 
             ret_dict = {
@@ -67,6 +75,27 @@ class BC_Policy(BaseAlgo):
 
             if cfg.train.debug:
                 break
+
+        # print('Evaluating...')
+        # for data in tqdm(self.val_loader):
+        #     bc_loss, mmd, kl_div = self.compute_loss(data, augmentation=False)
+        #     loss = bc_loss
+
+        #     ret_dict = {
+        #         "loss": loss.item(),
+        #         "bc_loss": bc_loss.item(),
+        #         "mmd": mmd.item(),
+        #         "kl_div": kl_div.item(),
+        #     }
+
+        #     for k, v in ret_dict.items():
+        #         if k not in tot_loss_dict:
+        #             tot_loss_dict[k] = 0
+        #         tot_loss_dict[k] += v
+        #     tot_items += 1
+
+        #     if cfg.train.debug:
+        #         break
 
         out_dict = {}
         for k, v in tot_loss_dict.items():

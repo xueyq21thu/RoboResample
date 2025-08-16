@@ -1,7 +1,7 @@
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # os.environ['MUJOCO_GL'] = 'osmesa'
-# os.environ['PYOPENGL_PLATFORM'] = 'osmesa'        
+# os.environ['PYOPENGL_PLATFORM'] = 'osmesa'     
 # os.environ['MUJOCO_GL'] = 'egl'             
 # os.environ['PYOPENGL_PLATFORM'] = 'egl'
 
@@ -25,7 +25,7 @@ def main(cfg: DictConfig):
     warnings.simplefilter("ignore")
     lightning.seed_everything(cfg.train.seed)
 
-    algo = get_algo_class(cfg.algo.algo_type)(cfg, inference=True, device='cpu')  # ['cpu', 'cuda']  
+    algo = get_algo_class(cfg.algo.algo_type)(cfg, inference=True, device='cuda')  # ['cpu', 'cuda']  
     algo.inference()
     
 

@@ -1,3 +1,4 @@
+import logging
 import os
 import torch
 import wandb
@@ -6,14 +7,29 @@ import pandas as pd
 from tqdm import tqdm
 from typing import List
 from einops import rearrange
+# data writer
+from ..data.data_writer import HDF5Writer
 
 from .data_utils import raw_obs_to_tensor_obs
 from .video_utils import video_pad_time, rearrange_videos, render_done_to_boundary
-
+from ..models.adversarial_sampler import AdversarialActionSampler
 
 @torch.no_grad()
-def rollout(cfg, env_dict, policy, num_env_rollouts, horizon=None, return_wandb_video=True,
-            success_vid_first=False, fail_vid_first=False, video_writer=None, device=None):
+def rollout(cfg, 
+            env_dict, 
+            policy, 
+            num_env_rollouts, 
+            horizon=None, 
+            return_wandb_video=True,
+            success_vid_first=False, 
+            fail_vid_first=False, 
+            video_writer=None, 
+            device=None, 
+            data_writer: HDF5Writer = None,
+            data_writer_succ: HDF5Writer = None,
+            adversarial_sampler: AdversarialActionSampler = None
+            ):
+    
     policy.eval()
     all_env_indices = []
     all_task_indices = []
@@ -56,6 +72,23 @@ def rollout(cfg, env_dict, policy, num_env_rollouts, horizon=None, return_wandb_
 
             obs = env.set_init_state(init_states)
 
+            # Initialize the data writer
+            if data_writer:
+                episode_data_collectors = [{
+                    "obs": {key: [] for key in data_writer.obs_keys},
+                    "next_obs": {key: [] for key in data_writer.obs_keys},
+                    "actions": [],
+                    "rewards": [],
+                    "dones": [],
+                    "terminals": [],
+                } for _ in range(cfg.env.env_num)]
+
+            if data_writer_succ:
+                collect_succ = False
+
+            if adversarial_sampler:
+                inserted = False
+
             # simulate the physics without any actions
             # action_dim = cfg.policy.policy_head.network_kwargs.output_size
             # dummy_actions = np.zeros((cfg.env.env_num, action_dim))
@@ -67,9 +100,72 @@ def rollout(cfg, env_dict, policy, num_env_rollouts, horizon=None, return_wandb_
             episode_frames = []
             
             for step_i in tqdm(range(horizon)):
+
+                # for k in range(cfg.env.env_num):
+                #     obs[k]["agentview_image"] = obs[k]["agentview_image"][::-1, ::-1]
+                #     obs[k]["robot0_eye_in_hand_image"] = obs[k]["robot0_eye_in_hand_image"][::-1, ::-1]
+
                 data = raw_obs_to_tensor_obs(obs, task_emb, cfg, device)
-                a = policy.get_action(cfg, data)
+
+                for key, value in data.items():
+                    if isinstance(value, dict):
+                        for sub_key, sub_value in value.items():
+                            if isinstance(sub_value, torch.Tensor):
+                                data[key][sub_key] = sub_value.to(device)
+                    elif isinstance(value, torch.Tensor):
+                        data[key] = value.to(device)
+
+                if data_writer:
+                    # Make a deep copy of the observation dict to prevent modification by env.step
+                    current_obs = {i: {k: v.copy() for k, v in obs[i].items()} for i in range(cfg.env.env_num)}
+                
+                # --- SELECT ACTION: ADVERSARIAL OR STANDARD ---
+                should_intervene = False
+                was_inserted_this_step = False
+                if adversarial_sampler is not None:
+                    # TODO: Add Timestep policy
+                    # Check the intervention condition (e.g., gripper width)
+                    # We only need to check for the first env in the parallel batch
+                    gripper_qpos = data['obs']['gripper_states']
+                    gripper_qpos_abs = torch.abs(gripper_qpos[0][-1]).item()
+
+
+                    if gripper_qpos_abs < adversarial_sampler.intervention_threshold:
+                        should_intervene = True
+                        # logging.info(f"Intervening: {gripper_qpos_abs} < {adversarial_sampler.intervention_threshold} at timestep {step_i}")
+
+                if should_intervene and not inserted:
+                    a, was_inserted_this_step = adversarial_sampler.select_action(data)
+                    if was_inserted_this_step:
+                        inserted = True # Mark that an insertion happened in this episode
+                else:
+                    a = policy.get_action(cfg, data)
+
+                # copy the step data before env.step()
+                if data_writer:
+                    current_actions = a.copy() # Make a copy of the action
+
                 obs, r, done, info = env.step(a)
+
+
+                # Append data to collectors if data_writer is active
+                if data_writer:
+                    next_obs = obs.copy() # This is the next_obs for the previous state
+                    # obs
+                    # Loop through each parallel environment
+                    for i in range(cfg.env.env_num):
+                        # --- Append observations for the i-th environment ---
+                        for key in data_writer.obs_keys:
+                            # Append the state before the action was taken
+                            episode_data_collectors[i]["obs"][key].append(current_obs[i][key])
+                            # Append the state after the action was taken
+                            episode_data_collectors[i]["next_obs"][key].append(next_obs[i][key])
+                            
+                        # --- Append other data for the i-th environment ---
+                        episode_data_collectors[i]["actions"].append(current_actions)
+                        episode_data_collectors[i]["rewards"].append(r)
+                        episode_data_collectors[i]["dones"].append(done)
+                        episode_data_collectors[i]["terminals"].append(done)
 
                 video_img = []
                 for k in range(cfg.env.env_num):
@@ -78,17 +174,73 @@ def rollout(cfg, env_dict, policy, num_env_rollouts, horizon=None, return_wandb_
                 video_img = np.stack(video_img, axis=0)
                 frame = rearrange(video_img, "b h w c -> b c h w")
                 frame = render_done_to_boundary(frame, dones)
+
+                # TASK 1: Add a mark at the inserted timestep
+                if was_inserted_this_step:
+                    # The intervention is based on gripper_qpos[0], so we mark the frame for the FIRST environment.
+                    # The color needs to be shaped correctly for broadcasting over the image channels.
+
+                    boundary = 5  # pixels
+                    color = np.array([255, 0, 0], dtype=frame.dtype)[None, None, :] # Shape: (3, 1, 1)
+
+                    render_frame = obs[k]["agentview_image"]
+                    
+                    # Apply border to at this step
+                    render_frame[ :boundary, :,:] = color
+                    render_frame[  -boundary:, :,:] = color
+                    render_frame[  :, :boundary,:] = color
+                    render_frame[  :, -boundary:,:] = color
+
                 episode_frames.append(frame)
 
                 if video_writer != None:
                     video_writer.append_vector_obs(obs, dones, camera_name="agentview_image")
             
+                # If the episode is successfule
                 if all(dones):
+                    collect_succ = True
                     break
+            
+            # write the collected episode to file
+            if data_writer:
+                # episode_data_collectors[0]["terminals"][-1] = np.array([True])
+                # print(episode_data_collectors[0]["terminals"])
+                for i in range(cfg.env.env_num):
+                    # For each parallel env, write its collected trajectory as a demo
+                    # Convert lists of dicts/arrays into dicts of lists of arrays first
+                    episode_to_write = {
+                        "obs": {key: np.array(episode_data_collectors[i]["obs"][key]) for key in data_writer.obs_keys},
+                        "next_obs": {key: np.array(episode_data_collectors[i]["next_obs"][key]) for key in data_writer.obs_keys},
+                        "actions": np.array(episode_data_collectors[i]["actions"]),
+                        "rewards": np.array(episode_data_collectors[i]["rewards"]),
+                        "dones": np.array(episode_data_collectors[i]["dones"]),
+                    }
+                    data_writer.write_episode(episode_to_write)
+
+            if data_writer_succ and collect_succ:
+                for i in range(cfg.env.env_num):
+                    # For each parallel env, write its collected trajectory as a demo
+                    # Convert lists of dicts/arrays into dicts of lists of arrays first
+                    episode_to_write = {
+                        "obs": {key: np.array(episode_data_collectors[i]["obs"][key]) for key in data_writer.obs_keys},
+                        "next_obs": {key: np.array(episode_data_collectors[i]["next_obs"][key]) for key in data_writer.obs_keys},
+                        "actions": np.array(episode_data_collectors[i]["actions"]),
+                        "rewards": np.array(episode_data_collectors[i]["rewards"]),
+                        "dones": np.array(episode_data_collectors[i]["dones"]),
+                    }
+                    data_writer_succ.write_episode(episode_to_write)
 
             if video_writer != None:
-                video_writer.get_last_info(num_env_rollout, dones, env_description, task_idx)
+                # TASK 2: Mark the video of this rollout with 'inserted' tag when saving it
+                # Create the video description with a tag if an action was inserted.
+                video_description = env_description
+                if inserted:
+                    video_description += '_inserted'
+                video_writer.get_last_info(num_env_rollout, dones, video_description, task_idx)
                 video_writer.save()
+            
+            # log the success or failure
+            print(f"Episode {num_env_rollout+1} finished with success: {dones[-1]}")
 
             for k in range(cfg.env.env_num):
                 num_success += int(dones[k])
@@ -116,6 +268,7 @@ def rollout(cfg, env_dict, policy, num_env_rollouts, horizon=None, return_wandb_
             results[f"rollout/vis_env{env_idx}_task{task_idx}"] = env_vid[idx]
 
     return results
+
 
 
 def merge_results(results: List[dict], compute_avg=True):
@@ -154,4 +307,3 @@ def save_success_rate(epoch, success_metrics, summary_file_path):
 
     df = df[success_heads]
     df.to_csv(summary_file_path)
-    

@@ -341,3 +341,121 @@ class BCDPPolicy(BasePolicy):
 
     def reset(self):
         self.latent_queue = []
+
+
+
+    def get_sampled_actions(self, data, num_samples=1, compute_log_prob=False):
+        """
+        Generates a batch of action samples AND optionally their log probabilities.
+
+        Args:
+            data (dict): The observation data dictionary.
+            num_samples (int): The number of action samples to generate.
+            compute_log_prob (bool): If True, computes and returns the approximate
+                                     log probability for each sampled action.
+
+        Returns:
+            torch.Tensor: Sampled actions (B, num_samples, action_dim).
+            torch.Tensor or None: Approximate log probabilities (B, num_samples)
+                                  or None if compute_log_prob is False.
+        """
+        self.eval()
+        with torch.no_grad():
+            # --- 1. Feature Extraction (same as before) ---
+            # This part remains identical to the previous version
+            data = self.preprocess_input(data, train_mode=False)
+            x = self.spatial_encode(data)
+
+            # The latent_queue is likely empty or has a short history when called from the sampler.
+            # We must pad it to the model's expected sequence length.
+            current_history = list(self.latent_queue)
+            current_history.append(x) # Add the newest observation
+
+            # If history is shorter than the max sequence length, pad from the front
+            # by repeating the oldest available observation.
+            padding_needed = self.max_seq_len - len(current_history)
+            if padding_needed > 0:
+                # Get the oldest observation we have to use for padding
+                padding_tensor = current_history[0] 
+                padding = [padding_tensor] * padding_needed
+                padded_history = padding + current_history
+            else:
+                # If history is already full, just take the most recent items
+                padded_history = current_history[-self.max_seq_len:]
+
+            # Note: We do not modify self.latent_queue here, as this padding is only for this
+            # single inference call. The actual queue is managed by the main rollout loop.
+            x_temporal = torch.cat(padded_history, dim=1) # Shape: [B, max_seq_len, E]
+
+
+
+
+
+
+            # self.latent_queue.append(x)
+            # if len(self.latent_queue) > self.max_seq_len:
+            #     self.latent_queue.pop(0)
+            # x_temporal = torch.cat(self.latent_queue, dim=1)
+            x_encoded = self.temporal_encode(x_temporal)
+            features = x_encoded.mean(dim=1, keepdim=True)  # Shape: (B, 1, E)
+
+            B = features.shape[0]
+            if B != 1 and compute_log_prob:
+                raise NotImplementedError("Log prob computation is only supported for B=1")
+
+            # --- 2. Batched Sampling (same as before) ---
+            # ... (The logic to generate `noise`, `expanded_features`, `flat_noise` is identical) ...
+            noise_shape = (B * num_samples, self.cfg.policy.policy_head.network_kwargs.future_action_window_size + 1, 
+                        self.cfg.policy.policy_head.network_kwargs.in_channels)
+            noise = torch.randn(noise_shape, device=features.device)
+            # Repeat the condition for each sample
+            # `features` is (B, 1, E). After repeat, it's (B * num_samples, 1, E)
+            condition_z = features.repeat(num_samples, 1, 1)
+
+
+            # expanded_features = features.unsqueeze(1).repeat(1, num_samples, 1, 1)
+            model_kwargs = {"z": condition_z}
+
+            # flat_noise = noise.view(B * num_samples, noise_shape[2], noise_shape[3])
+            
+            sample_fn = self.policy_head.net.forward
+            if self.policy_head.ddim_diffusion is None:
+                self.policy_head.create_ddim(ddim_step=10)
+
+            # --- This call now just gets the final samples ---
+            samples = self.policy_head.ddim_diffusion.ddim_sample_loop(
+                sample_fn, noise.shape, noise, clip_denoised=False,
+                model_kwargs=model_kwargs, progress=False, device=features.device, eta=0.0
+            ) # Output shape: (B * num_samples, T, action_dim)
+            
+            # Reshape and get the final action
+            reshaped_samples = samples.view(B, num_samples, samples.shape[1], samples.shape[2])
+            actions = reshaped_samples[:, :, -1, :]  # Shape: (B, num_samples, action_dim)
+            actions = torch.clamp(actions, -1.0, 1.0)
+
+
+            log_probs = None
+            if compute_log_prob:
+                # --- 3. Compute Approximate Log Probability ---
+                # To calculate the loss correctly, we must use the ENTIRE generated sequence,
+                # not just the final action.
+                
+                # The `samples` tensor from the DDIM loop is already flat with shape
+                # (B * num_samples, T, action_dim). This is the correct shape for x_start.
+                # samples_for_loss = samples # Shape: (B * num_samples, T, action_dim)
+
+                # We are calculating the negative ELBO, which is our loss.
+                # The `sample_loss` function is now receiving the full sequence it expects.
+                negative_elbos = self.policy_head.sample_loss(
+                    x_start=samples, # <-- PASSES FULL T=10 SEQUENCE
+                    z=condition_z,      # Use the same expanded features
+                    reduction='none'          # Ensure it returns loss per sample
+                ) # Expected output shape: (B * num_samples,)
+
+                # The log probability is the negative of the loss
+                log_probs = -negative_elbos
+
+                # Reshape back to (B, num_samples)
+                log_probs = log_probs.view(B, num_samples)
+
+        return actions, log_probs
