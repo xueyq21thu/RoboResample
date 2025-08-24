@@ -4,13 +4,13 @@ defaults:
 
 
 # training
-seed: 0
+seed: 13
 device: "cuda"
-train_gpus: [0, 1, 2, 3]
+train_gpus: [0, 1]
 mix_precision: false
 use_augmentation: true
 
-n_epochs: 100        
+n_epochs: 50        
 batch_size: 64
 num_workers: 8
 
@@ -19,7 +19,7 @@ save_freq: 10
 
 grad_clip: 100.
 loss_scale: 1.0
-mi_loss_scale: 1e-4
+mi_loss_scale: 0.001
 mine_mi_loss_scale: 0.1
 
 # resume training

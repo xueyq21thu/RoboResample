@@ -8,7 +8,7 @@ from tqdm import tqdm
 from typing import List
 from einops import rearrange
 # data writer
-from ..data.data_writer import HDF5Writer
+from ..data.data_writer import HDF5Writer, HDF5WriterSucc
 
 from .data_utils import raw_obs_to_tensor_obs
 from .video_utils import video_pad_time, rearrange_videos, render_done_to_boundary
@@ -26,8 +26,8 @@ def rollout(cfg,
             video_writer=None, 
             device=None, 
             data_writer: HDF5Writer = None,
-            data_writer_succ: HDF5Writer = None,
-            adversarial_sampler: AdversarialActionSampler = None
+            data_writer_succ: HDF5WriterSucc = None,
+            adversarial_sampler: AdversarialActionSampler = None,
             ):
     
     policy.eval()
@@ -44,6 +44,10 @@ def rollout(cfg,
         all_succ = []
         all_horizon = []
         vid = []
+
+        if task_idx < 2:
+            print(f"--- Skipping task {task_idx} as requested. ---")
+            continue
 
         if video_writer != None:
             final_video_path = os.path.join(video_writer.video_path, str(task_idx) + '.' + env_description.split('/')[-1])
@@ -62,6 +66,11 @@ def rollout(cfg,
                     print(f"***{task_idx} {env_description.split('/')[-1]}*** has done!!!")
                     continue
             
+        # # Init the sampler
+        # if adversarial_sampler:
+        #     adversarial_sampler.reset()
+
+
         for num_env_rollout in range(num_env_rollouts):
             print(f"\nEnv: {env_idx}, Task_id: {task_idx}, Rollout: {num_env_rollout+1}/{num_env_rollouts} running...")
             env.reset()
@@ -73,7 +82,7 @@ def rollout(cfg,
             obs = env.set_init_state(init_states)
 
             # Initialize the data writer
-            if data_writer:
+            if data_writer or data_writer_succ:
                 episode_data_collectors = [{
                     "obs": {key: [] for key in data_writer.obs_keys},
                     "next_obs": {key: [] for key in data_writer.obs_keys},
@@ -149,7 +158,7 @@ def rollout(cfg,
 
 
                 # Append data to collectors if data_writer is active
-                if data_writer:
+                if data_writer or data_writer_succ:
                     next_obs = obs.copy() # This is the next_obs for the previous state
                     # obs
                     # Loop through each parallel environment
@@ -215,7 +224,7 @@ def rollout(cfg,
                         "rewards": np.array(episode_data_collectors[i]["rewards"]),
                         "dones": np.array(episode_data_collectors[i]["dones"]),
                     }
-                    data_writer.write_episode(episode_to_write)
+                    data_writer.write_episode(episode_to_write, task_description=env_description)
 
             if data_writer_succ and collect_succ:
                 for i in range(cfg.env.env_num):
@@ -228,14 +237,15 @@ def rollout(cfg,
                         "rewards": np.array(episode_data_collectors[i]["rewards"]),
                         "dones": np.array(episode_data_collectors[i]["dones"]),
                     }
-                    data_writer_succ.write_episode(episode_to_write)
+                    data_writer_succ.write_episode(episode_to_write, task_description=env_description)
 
             if video_writer != None:
                 # TASK 2: Mark the video of this rollout with 'inserted' tag when saving it
                 # Create the video description with a tag if an action was inserted.
                 video_description = env_description
-                if inserted:
-                    video_description += '_inserted'
+                if adversarial_sampler:
+                    if  inserted:
+                        video_description += '_inserted'
                 video_writer.get_last_info(num_env_rollout, dones, video_description, task_idx)
                 video_writer.save()
             

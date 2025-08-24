@@ -29,6 +29,11 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import tqdm
+import seaborn as sns
+
+import sys
+# append local path to sys environment
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # --- Local Imports ---
 # Assuming the model definitions are in a file named 'train_calql_from_hdf5_beautified.py'
@@ -232,3 +237,93 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+def visualize_critic_evaluation(
+    actions: torch.Tensor,
+    q_values: torch.Tensor,
+    log_probs: torch.Tensor,
+    action_dim_pair1: tuple = (0, 1),
+    action_dim_pair2: tuple = (2, 3),
+    title: str = "Extended Critic & Policy Evaluation of Sampled Actions"
+):
+    """
+    可视化Critic对采样动作的评估结果, 并包含Policy的对数概率信息.
+
+    该函数会生成一个2x2的图床, 包含四个子图：
+    1. Q值的直方图和核密度估计图, 用于展示Q值的整体分布.
+    2. 对数概率（log_prob）的直方图, 展示Policy对采样动作的置信度分布.
+    3. 第一个二维散点图, 展示Q值在第一对指定动作维度上的分布.
+    4. 第二个二维散点图, 展示Q值在第二对指定动作维度上的分布.
+
+    Args:
+        actions (torch.Tensor): 采样的候选动作, 形状为 (num_samples, action_dim).
+        q_values (torch.Tensor): 对应的Q值, 形状为 (num_samples,).
+        log_probs (torch.Tensor): 对应的对数概率, 形状为 (num_samples,).
+        action_dim_pair1 (tuple): 在第一个散点图中作为(X, Y)轴的动作维度索引.
+        action_dim_pair2 (tuple): 在第二个散点图中作为(X, Y)轴的动作维度索引.
+        title (str): 图像的总标题.
+    """
+    # 将Tensor转为Numpy, 并移到CPU
+    actions_np = actions.cpu().numpy() if isinstance(actions, torch.Tensor) else actions
+    q_values_np = q_values.cpu().numpy() if isinstance(q_values, torch.Tensor) else q_values
+    log_probs_np = log_probs.cpu().numpy() if isinstance(log_probs, torch.Tensor) else log_probs
+    
+    # 创建一个2行2列的图床
+    fig, axes = plt.subplots(2, 2, figsize=(18, 12))
+    fig.suptitle(title, fontsize=20)
+    
+    # --- 图1 (左上): Q值分布直方图 ---
+    ax1 = axes[0, 0]
+    sns.histplot(q_values_np, kde=True, ax=ax1, bins=30, color='royalblue')
+    mean_q = q_values_np.mean()
+    std_q = q_values_np.std()
+    ax1.axvline(mean_q, color='r', linestyle='--', label=f'Mean: {mean_q:.2f}')
+    ax1.set_title(f'Q-Value Distribution (Std: {std_q:.2f})')
+    ax1.set_xlabel('Q-Value')
+    ax1.set_ylabel('Frequency')
+    ax1.legend()
+
+    # --- 图2 (右上): Log Probability 分布直方图 ---
+    ax2 = axes[0, 1]
+    sns.histplot(log_probs_np, kde=True, ax=ax2, bins=30, color='seagreen')
+    mean_logp = log_probs_np.mean()
+    std_logp = log_probs_np.std()
+    ax2.axvline(mean_logp, color='r', linestyle='--', label=f'Mean: {mean_logp:.2f}')
+    ax2.set_title(f'Log Probability Distribution (Std: {std_logp:.2f})')
+    ax2.set_xlabel('Log Probability')
+    ax2.set_ylabel('Frequency')
+    ax2.legend()
+    
+    # --- 图3 (左下): 动作空间中的Q值散点图 (第一组维度) ---
+    ax3 = axes[1, 0]
+    dim_x1, dim_y1 = action_dim_pair1
+    scatter1 = ax3.scatter(
+        actions_np[:, dim_x1],
+        actions_np[:, dim_y1],
+        c=q_values_np,
+        cmap='viridis',
+        alpha=0.7
+    )
+    ax3.set_title(f'Q-Values in Action Space (Dims {dim_x1} vs {dim_y1})')
+    ax3.set_xlabel(f'Action Dimension {dim_x1}')
+    ax3.set_ylabel(f'Action Dimension {dim_y1}')
+    fig.colorbar(scatter1, ax=ax3, label='Q-Value')
+
+    # --- 图4 (右下): 动作空间中的Q值散点图 (第二组维度) ---
+    ax4 = axes[1, 1]
+    dim_x2, dim_y2 = action_dim_pair2
+    scatter2 = ax4.scatter(
+        actions_np[:, dim_x2],
+        actions_np[:, dim_y2],
+        c=q_values_np,
+        cmap='plasma', # 使用不同的颜色映射以作区分
+        alpha=0.7
+    )
+    ax4.set_title(f'Q-Values in Action Space (Dims {dim_x2} vs {dim_y2})')
+    ax4.set_xlabel(f'Action Dimension {dim_x2}')
+    ax4.set_ylabel(f'Action Dimension {dim_y2}')
+    fig.colorbar(scatter2, ax=ax4, label='Q-Value')
+
+    # 显示图像
+    plt.tight_layout(rect=[0, 0.03, 1, 0.96])
+    plt.savefig('critic_evaluation.png', dpi=300, bbox_inches='tight')

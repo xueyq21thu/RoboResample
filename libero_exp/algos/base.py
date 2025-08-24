@@ -1,5 +1,6 @@
 import os
 import gc
+import glob
 import math
 import time
 import datetime
@@ -15,7 +16,7 @@ from lightning.fabric import Fabric
 from libero.libero.benchmark import get_benchmark
 from libero.lifelong.datasets import SequenceVLDataset
 
-from ..data.get_dataset import get_dataset
+from ..data.get_dataset import get_dataset, get_rollout_dataset
 from ..models import BCRNNPolicy, BCTransformerPolicy, BCViLTPolicy, BCMLPPolicy, BCDPPolicy
 from ..utils.data_utils import get_task_embs
 from ..utils.env_utils import build_env
@@ -25,7 +26,7 @@ from ..utils.results_utils import rollout, merge_results, save_success_rate
 from ..utils.record_utils import init_wandb, MetricLogger, BestAvgLoss, AverageMeter, MetricMeter
 
 # import the data writer
-from ..data.data_writer import HDF5Writer
+from ..data.data_writer import HDF5Writer, HDF5WriterSucc
 from calql.model import Critic
 from ..models.adversarial_sampler import AdversarialActionSampler
 
@@ -125,6 +126,7 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
         train_manip_datasets, val_manip_datasets = [], []
         descriptions = []
 
+        shape_meta = None
         for i in range(n_tasks):
             try:
                 task_i_train_dataset, shape_meta = get_dataset(
@@ -155,6 +157,49 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
             task_description = benchmark.get_task(i).language
             descriptions.append(task_description)
             print(f"{i+1}. Loaded form {benchmark.get_task_demonstration(i)}.")
+        
+        # get my own dataset
+        extra_paths_config = cfg.data.get("extra_rollout_paths", [])
+        if extra_paths_config:
+            if isinstance(extra_paths_config, str):
+                extra_paths_config = [extra_paths_config]
+            
+            print("\n--- Appending extra rollout datasets ---")
+            
+            # scan all data in the specific path
+            all_rollout_files = []
+            for path_pattern in extra_paths_config:
+                matched_paths = glob.glob(path_pattern)
+                for path in matched_paths:
+                    if os.path.isdir(path):
+                        hdf5_files_in_dir = glob.glob(os.path.join(path, "*.hdf5"))
+                        all_rollout_files.extend(hdf5_files_in_dir)
+                        print(f"  - Found {len(hdf5_files_in_dir)} HDF5 files in directory: {path}")
+                    elif path.endswith('.hdf5'):
+                        all_rollout_files.extend(glob.glob(path_pattern))
+            
+            for rollout_path in all_rollout_files:
+                try:
+                    rollout_dataset = get_rollout_dataset(
+                        dataset_path=rollout_path,
+                        obs_modality=cfg.data.obs.modality,
+                        seq_len=cfg.data.seq_len,
+                        frame_stack=cfg.data.frame_stack,
+                        hdf5_cache_mode="low_dim"
+                    )
+
+                    # append the data into training dataset
+                    train_manip_datasets.append(rollout_dataset)
+                    # remove env_name at the prefix and postfix
+                    rollout_task_name = os.path.basename(rollout_path).replace("_demo.hdf5", "")
+                    rollout_task_name = rollout_task_name.replace(f'{cfg.data.env_name}_','')
+                    descriptions.append(rollout_task_name)
+                    
+                    print(f"  - Successfully loaded and appended: {os.path.basename(rollout_path)}")
+                
+                except Exception as e:
+                    print(f"[error] failed to load rollout dataset: {rollout_path}")
+                    print(f"[error] {e}")
 
         embedding_model_path = cfg.data.embedding_model_path
         cwd = os.path.dirname(os.path.abspath(__file__))
@@ -488,11 +533,12 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
         video_writer = VideoWriter(video_save_dir, save_video=True, single_video=False) 
 
         # --- 3. Initialize Data Writer (if enabled) ---
-        data_writer = None
+        data_writer = {}
         if cfg.eval.save_rollouts:
+            
             logging.info(f"Rollout data saving is ENABLED.")
-            output_hdf5_path = f'rollout/rollout_{cfg.data.env_name}.hdf5'
-            output_hdf5_path_succ = f'rollout/rollout_{cfg.data.env_name}_succ.hdf5'
+            output_hdf5_path = 'rollout'
+            output_hdf5_path_succ = 'rollout_succ'
             
             # Define the observation keys to be saved in the HDF5 file.
             # This should match the keys expected by your dataset loader.
@@ -501,17 +547,23 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
                 "robot0_eye_in_hand_image", 
                 "robot0_gripper_qpos",
                 "robot0_joint_pos",
-                "object", # It's good practice to save object states as well
             ]
 
-            data_writer = HDF5Writer(
-                data_path=output_hdf5_path,
+            data_writer_all = HDF5Writer(
+                base_output_dir=output_hdf5_path,
+                env_name=cfg.data.env_name,
                 obs_keys=obs_keys_to_save
             )
-            data_writer_succ = HDF5Writer(
-                data_path=output_hdf5_path_succ,
+            data_writer_succ = HDF5WriterSucc(
+                base_output_dir=output_hdf5_path_succ,
+                env_name=cfg.data.env_name,
                 obs_keys=obs_keys_to_save
             )
+
+            data_writers = {
+                "all": data_writer_all,
+                "succ": data_writer_succ
+            }
 
 
         all_results = []
@@ -528,56 +580,19 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
                 env = build_env(cfg, img_size=cfg.data.img_size, env_idx_start_end=(env_idx, env_idx+1), **cfg.env)
 
                 # if not saving the rollout data
-                if cfg.eval.save_rollouts and not cfg.sampler.enable:
-                    result = rollout(
-                        cfg, env, model, 
-                        num_env_rollouts=cfg.env.num_env_rollouts // cfg.env.env_num, 
-                        horizon=cfg.env.max_steps,
-                        return_wandb_video=False,
-                        success_vid_first=False, 
-                        fail_vid_first=False,
-                        video_writer=video_writer,
-                        device=self.device,
-                        data_writer=data_writer,
-                        data_writer_succ=data_writer_succ
-                    )
-                elif cfg.eval.save_rollouts and cfg.sampler.enable:
-                    result = rollout(
-                        cfg, env, model, 
-                        num_env_rollouts=cfg.env.num_env_rollouts // cfg.env.env_num, 
-                        horizon=cfg.env.max_steps,
-                        return_wandb_video=False,
-                        success_vid_first=False, 
-                        fail_vid_first=False,
-                        video_writer=video_writer,
-                        device=self.device,
-                        data_writer=data_writer,
-                        data_writer_succ=data_writer_succ,
-                        adversarial_sampler=adversarial_sampler
-                    )
-                elif not cfg.eval.save_rollouts and not cfg.sampler.enable:
-                    result = rollout(
-                        cfg, env, model, 
-                        num_env_rollouts=cfg.env.num_env_rollouts // cfg.env.env_num, 
-                        horizon=cfg.env.max_steps,
-                        return_wandb_video=False,
-                        success_vid_first=False, 
-                        fail_vid_first=False,
-                        video_writer=video_writer,
-                        device=self.device,
-                    )
-                else:
-                    result = rollout(
-                        cfg, env, model, 
-                        num_env_rollouts=cfg.env.num_env_rollouts // cfg.env.env_num, 
-                        horizon=cfg.env.max_steps,
-                        return_wandb_video=False,
-                        success_vid_first=False, 
-                        fail_vid_first=False,
-                        video_writer=video_writer,
-                        device=self.device,
-                        adversarial_sampler=adversarial_sampler
-                    )
+                result = rollout(
+                    cfg, env, model, 
+                    num_env_rollouts=cfg.env.num_env_rollouts // cfg.env.env_num, 
+                    horizon=cfg.env.max_steps,
+                    return_wandb_video=False,
+                    success_vid_first=False, 
+                    fail_vid_first=False,
+                    video_writer=video_writer,
+                    device=self.device,
+                    data_writer=data_writer_all if cfg.eval.save_rollouts else None,
+                    data_writer_succ=data_writer_succ if cfg.eval.save_rollouts else None,
+                    adversarial_sampler=adversarial_sampler if cfg.sampler.enable else None
+                )
 
                 if self.device == 'cuda':
                     self.fabric.barrier()
@@ -595,8 +610,11 @@ class BaseAlgo(nn.Module, metaclass=AlgoMeta):
             torch.cuda.empty_cache()
 
             # clean the data writer
-            if data_writer:
-                data_writer.close()
+            if data_writers:
+                for writer_name, writer in data_writers.items():
+                    if writer:
+                        writer.close()
+                        print(f"Writer Closed: {writer}")
 
         return all_results
 

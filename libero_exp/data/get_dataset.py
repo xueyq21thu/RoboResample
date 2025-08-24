@@ -7,13 +7,39 @@
     we should in principle use seq_len, but the paddings of the two are different.
     So that's why we currently use frame_stack instead of seq_len.
 """
-
+import os
+import h5py
 import numpy as np
 from torch.utils.data import Dataset
 import robomimic.utils.file_utils as FileUtils
 import robomimic.utils.obs_utils as ObsUtils
 
-from .dataset import SequenceDataset
+from .dataset import SequenceDataset, MixedSequenceDataset
+
+OBS_KEY_ALIASES = {
+    "agentview": ["agentview_image", "agentview_rgb"],
+    "eye_in_hand": ["robot0_eye_in_hand_image", "eye_in_hand_rgb"],
+    "gripper": ["robot0_gripper_qpos", "gripper_states"],
+    "joint": ["robot0_joint_pos", "joint_states"],
+}
+
+
+def resolve_obs_keys(hdf5_path):
+    """Unify the keys"""
+    with h5py.File(hdf5_path, "r") as f:
+        demo0_keys = list(f["data/demo_0/obs"].keys())
+
+    resolved_keys = {}
+    for unified_name, aliases in OBS_KEY_ALIASES.items():
+        for alias in aliases:
+            if alias in demo0_keys:
+                resolved_keys[unified_name] = alias
+                break
+        else:
+            print(f"[warning] {unified_name} not found in dataset {hdf5_path}")
+
+    return resolved_keys
+
 
 
 def get_dataset(
@@ -37,6 +63,7 @@ def get_dataset(
     all_obs_keys = []
     for modality_name, modality_list in obs_modality.items():
         all_obs_keys += modality_list
+
     shape_meta = FileUtils.get_shape_metadata_from_dataset(
         dataset_path=dataset_path, all_obs_keys=all_obs_keys, verbose=False
     )
@@ -66,6 +93,67 @@ def get_dataset(
         val_demo_num=val_demo_num,
     )
     return dataset, shape_meta
+
+def get_rollout_dataset(
+    dataset_path,
+    obs_modality,
+    seq_len=1,
+    frame_stack=1,
+    hdf5_cache_mode="low_dim",
+    *args,
+    **kwargs
+):
+    """
+    A new, dedicated function to load custom rollout HDF5 files.
+
+    This function correctly maps the abstract keys from the config to the
+    physical keys present in the rollout HDF5 file before loading.
+    """
+    print(f"\n--- Loading Rollout Dataset: {os.path.basename(dataset_path)} ---")
+
+    ROLLOUT_KEY_MAPPING = {
+        "agentview_rgb": "agentview_image",
+        "eye_in_hand_rgb": "robot0_eye_in_hand_image",
+        "gripper_states": "robot0_gripper_qpos",
+        "joint_states": "robot0_joint_pos",
+    }
+
+
+    physical_obs_keys = []
+    for modality_list in obs_modality.values():
+        for abstract_key in modality_list:
+            physical_key = ROLLOUT_KEY_MAPPING.get(abstract_key)
+            if physical_key:
+                physical_obs_keys.append(physical_key)
+
+    keys_to_exclude_from_rollout = ['ee_ori', 'ee_pos', 'ee_states']
+    physical_obs_keys = [key for key in physical_obs_keys if key not in keys_to_exclude_from_rollout]
+
+    print(f"  - Mapped to PHYSICAL keys for this rollout: {physical_obs_keys}")
+    
+    # --- 2. 创建 SequenceDataset 实例 ---
+    dataset = SequenceDataset(
+        hdf5_path=dataset_path,
+        obs_keys=physical_obs_keys,
+        dataset_keys=["actions", "rewards", "dones", "terminals"],
+        load_next_obs=True,
+        frame_stack=frame_stack,
+        seq_length=seq_len,
+        pad_frame_stack=True,
+        pad_seq_length=True,
+        get_pad_mask=False,
+        goal_mode=None,
+        hdf5_cache_mode=hdf5_cache_mode,
+        hdf5_use_swmr=False,
+        hdf5_normalize_obs=None,
+        filter_by_attribute=None,
+        train_ratio=None,
+        train=True,
+        val_demo_num=None,
+    )
+    
+    print("--------------------------------------------------")
+    return dataset
 
 
 class SequenceVLDataset(Dataset):

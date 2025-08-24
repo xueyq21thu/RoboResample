@@ -637,3 +637,104 @@ class SequenceDataset(torch.utils.data.Dataset):
         `DataLoader` documentation, for more info.
         """
         return None
+
+
+class MixedSequenceDataset(torch.utils.data.Dataset):
+    """
+    A dataset that mixes multiple SequenceDataset instances.
+
+    This class acts as a wrapper around a list of SequenceDataset objects,
+    presenting them as a single, larger dataset. It handles the indexing
+    to seamlessly retrieve data from the correct underlying dataset.
+    """
+    def __init__(self, datasets: list, hdf5_normalize_obs=False):
+        """
+        Initializes the MixedSequenceDataset.
+
+        Args:
+            datasets (list): A list of initialized SequenceDataset objects.
+            hdf5_normalize_obs (bool): Whether to normalize observations. If True,
+                                       it will compute normalization stats across
+                                       ALL provided datasets.
+        """
+        super().__init__()
+        self.datasets = datasets
+        self.num_datasets = len(self.datasets)
+        
+        # Calculate the cumulative lengths to map a global index to a local one
+        self.lengths = [len(ds) for ds in self.datasets]
+        self.cumulative_lengths = np.cumsum(self.lengths)
+        self.total_length = self.cumulative_lengths[-1]
+
+        # --- Combine metadata for compatibility ---
+        # The number of demos is the sum of demos from all datasets
+        self.n_demos = sum(ds.n_demos for ds in self.datasets)
+        
+        # We can optionally compute unified normalization stats across all datasets
+        self.obs_normalization_stats = None
+        if hdf5_normalize_obs:
+            self.obs_normalization_stats = self._compute_mixed_normalization_stats()
+
+        # Print some useful info
+        print("\n--- MixedSequenceDataset Initialized ---")
+        for i, ds in enumerate(self.datasets):
+            print(f"  - Dataset {i}: {os.path.basename(ds.hdf5_path)}")
+            print(f"    - Sequences: {self.lengths[i]}")
+        print(f"  - Total Sequences: {self.total_length}")
+        print("------------------------------------")
+
+
+    def __len__(self) -> int:
+        """Returns the total number of sequences across all datasets."""
+        return self.total_length
+
+    def __getitem__(self, index: int):
+        """
+        Fetches an item from the appropriate underlying dataset.
+        """
+        # Find which dataset the index belongs to
+        # `np.searchsorted` efficiently finds the index of the first cumulative length
+        # that is greater than the given index.
+        dataset_idx = np.searchsorted(self.cumulative_lengths, index, side='right')
+        
+        # Calculate the local index within that dataset
+        if dataset_idx == 0:
+            local_index = index
+        else:
+            local_index = index - self.cumulative_lengths[dataset_idx - 1]
+            
+        # Retrieve the item from the corresponding dataset
+        item = self.datasets[dataset_idx][local_index]
+
+        # Apply unified normalization if enabled
+        if self.obs_normalization_stats:
+            item["obs"] = ObsUtils.normalize_obs(item["obs"], obs_normalization_stats=self.obs_normalization_stats)
+            if "next_obs" in item:
+                 item["next_obs"] = ObsUtils.normalize_obs(item["next_obs"], obs_normalization_stats=self.obs_normalization_stats)
+
+        return item
+
+    def get_obs_normalization_stats(self):
+        """Returns the unified normalization stats."""
+        return self.obs_normalization_stats
+
+    def _compute_mixed_normalization_stats(self):
+        """
+        Computes and aggregates observation normalization stats from all datasets.
+        This is a simplified version. A proper implementation would use the
+        parallel variance algorithm as seen in SequenceDataset.
+        """
+        print("MixedSequenceDataset: computing combined observation normalization stats...")
+        all_stats = []
+        for ds in self.datasets:
+            if ds.obs_normalization_stats is None:
+                # This dataset must compute its stats first
+                with ds.hdf5_file_opened() as f:
+                     ds.obs_normalization_stats = ds.normalize_obs()
+            all_stats.append(ds.get_obs_normalization_stats())
+        
+        # For simplicity, we'll just use the stats from the first dataset.
+        # A robust implementation would merge these stats.
+        # This is often sufficient if the datasets are not wildly different.
+        print("Warning: Using observation normalization stats from the FIRST dataset for all mixed data.")
+        return all_stats[0]

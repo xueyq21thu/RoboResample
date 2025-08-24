@@ -102,4 +102,5 @@ ipython_config.py
 
 checkpoint/
 rollout/
+rollout_succ/
 checkpoints/

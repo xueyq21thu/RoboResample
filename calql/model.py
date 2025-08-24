@@ -1,8 +1,9 @@
+# model.py
+
 import torch
+import numpy as np
 import torch.nn as nn
-from typing import Tuple
-
-
+from typing import Tuple, List, Dict
 
 class Actor(nn.Module):
     """
@@ -120,3 +121,76 @@ class Critic(nn.Module):
         
         return q1, q2
     
+
+class MetaPolicy(nn.Module):
+    """
+    A high-level policy (gating network) that decides when to explore.
+
+    This network takes the current state as input and outputs a probability
+    distribution over two high-level actions: 'exploit' (use the main policy)
+    or 'explore' (use the adversarial sampler). Its goal is to learn an
+    optimal intervention strategy based on the principle of maximizing
+    information gain, proxied by critic uncertainty.
+    """
+    def __init__(self, state_dim: int, hidden_dim: int = 128):
+        """
+        Initializes the MetaPolicy network.
+
+        Args:
+            state_dim (int): The dimension of the state space.
+            hidden_dim (int): The size of the hidden layers.
+        """
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 2)  # 2 logits for 'exploit' (idx 0) and 'explore' (idx 1)
+        )
+
+    def forward(self, state: torch.Tensor) -> torch.distributions.Categorical:
+        """
+        Takes a state and returns a categorical distribution over high-level actions.
+
+        Args:
+            state (torch.Tensor): The input state tensor of shape (batch_size, state_dim).
+
+        Returns:
+            torch.distributions.Categorical: A distribution object from which you can
+                                             sample actions and get log probabilities.
+        """
+        logits = self.net(state)
+        return torch.distributions.Categorical(logits=logits)
+
+
+class MetaPolicyReplayBuffer:
+    """
+    A simple replay buffer to store transitions for training the MetaPolicy.
+
+    It stores high-level decision events, which consist of the log-probability
+    of the chosen high-level action and the delayed reward received after the
+    action's duration.
+    """
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.buffer: List[Dict] = []
+        self.position = 0
+
+    def push(self, log_prob: torch.Tensor, reward: float):
+        """Saves a transition, detaching tensors to prevent memory leaks."""
+        if len(self.buffer) < self.capacity:
+            self.buffer.append(None)
+        self.buffer[self.position] = {
+            "log_prob": log_prob.detach(),
+            "reward": reward
+        }
+        self.position = (self.position + 1) % self.capacity
+
+    def sample(self, batch_size: int) -> List[Dict]:
+        """Samples a batch of transitions."""
+        indices = np.random.choice(len(self.buffer), batch_size, replace=False)
+        return [self.buffer[i] for i in indices]
+
+    def __len__(self) -> int:
+        return len(self.buffer)
